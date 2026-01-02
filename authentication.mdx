@@ -3,11 +3,11 @@ title: "Authentication"
 description: "Learn about API access and rate limiting"
 ---
 
-The SolixDB API is **publicly accessible** and does not require authentication. All requests are rate-limited based on your IP address.
+The SolixDB API is **publicly accessible** and does not require any authentication. There is no API key system—simply make requests and we track usage by IP address.
 
 ## No Authentication Required
 
-You can start making requests immediately without any API keys or authentication tokens. Simply make requests to our API endpoints.
+You can start making requests immediately—no API keys, no tokens, no sign-up required. Simply make requests to our API endpoints and we'll track usage based on your IP address.
 
 ## Rate Limiting
 
@@ -53,5 +53,26 @@ curl -X POST "https://api.solixdb.xyz/graphql" \
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.solixdb.xyz/graphql';
+const response = await fetch('https://api.solixdb.xyz/graphql', {
   method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    query: '{ stats { totalTransactions } }'
+  })
+});
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.solixdb.xyz/graphql',
+    json={'query': '{ stats { totalTransactions } }'}
+)
+print(response.json())
+```
+</CodeGroup>

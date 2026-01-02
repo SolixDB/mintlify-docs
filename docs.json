@@ -72,8 +72,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Get API Key",
-      "href": "mailto:support@solixdb.xyz"
+      "label": "Get Started",
+      "href": "/getting-started"
     }
   },
   "contextual": {
