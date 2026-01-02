@@ -53,13 +53,8 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/solixdb",
+          "href": "https://github.com/SolixDB",
           "icon": "github"
-        },
-        {
-          "anchor": "Website",
-          "href": "https://solixdb.xyz",
-          "icon": "globe"
         }
       ]
     }
@@ -71,51 +66,32 @@
   "navbar": {
     "links": [
       {
-        "label": "Website",
-        "href": "https://solixdb.xyz"
-      },
-      {
         "label": "Support",
         "href": "mailto:support@solixdb.xyz"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Get Started",
-      "href": "/getting-started"
+      "label": "Get API Key",
+      "href": "mailto:support@solixdb.xyz"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
       "x": "https://x.com/solixdb",
-      "github": "https://github.com/solixdb"
-    },
-    "links": [
-      {
-        "group": "Product",
-        "items": [
-          {
-            "name": "Website",
-            "href": "https://solixdb.xyz"
-          },
-          {
-            "name": "AnchorLabs",
-            "href": "https://anchorlabs.solixdb.xyz"
-          }
-        ]
-      }
-    ]
+      "github": "https://github.com/SolixDB"
+    }
   }
 }
