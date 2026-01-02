@@ -13,11 +13,7 @@ POST /graphql
 
 ## Authentication
 
-The API requires authentication via API key. Include it in the request header:
-
-```
-X-API-Key: your-api-key
-```
+The API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address.
 
 ## Schema
 
@@ -140,7 +136,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ transactions(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", limit: 10) { signature protocolName fee computeUnits blockTime } }"
   }'
@@ -173,7 +168,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ transaction(signature: \"5KJp...\") { signature protocolName fee computeUnits blockTime } }"
   }'
@@ -211,7 +205,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ protocolAnalytics(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\") { protocolName totalTransactions totalFees averageFee uniquePrograms } }"
   }'
@@ -249,7 +242,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ timeSeries(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", dateTo: \"2025-07-21\", granularity: \"hour\") { timestamp value } }"
   }'
@@ -286,7 +278,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ feeAnalytics(protocolName: \"jupiter_v6\") { minFee maxFee avgFee medianFee p95Fee p99Fee totalFees } }"
   }'
@@ -318,7 +309,6 @@ query {
 ```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "{ stats { totalTransactions totalFailedTransactions dateRange { from to } protocols { name count } } }"
   }'
@@ -340,38 +330,14 @@ const query = `
   }
 `;
 
-const response = await fetch('https://api.solixdb.xyz/graphql', {
+const response = await fetch('https://api.solixdb.xyz/graphql';
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-key'
-  },
-  body: JSON.stringify({ query })
-});
-
-const data = await response.json();
-console.log(data);
-```
-
-### Using Python
-
-```python
-import requests
-
-query = """
-{
-  transactions(protocolName: "jupiter_v6", limit: 5) {
-    signature
-    protocolName
-    fee
-  }
 }
 """
 
 response = requests.post(
     'https://api.solixdb.xyz/graphql',
     json={'query': query},
-    headers={'X-API-Key': 'your-api-key'}
 )
 
 data = response.json()

@@ -101,9 +101,6 @@ Example of a single code block:
 const apiConfig = {
   baseURL: 'https://api.example.com',
   timeout: 5000,
-  headers: {
-    'Authorization': `Bearer ${process.env.API_TOKEN}`
-  }
 };
 ```
 
@@ -113,7 +110,7 @@ Example of a code group:
 
 <CodeGroup>
 ```javascript Node.js
-const response = await fetch('/api/endpoint', {
+const response = await fetch('/api/endpoint';
   headers: { Authorization: `Bearer ${apiKey}` }
 });
 ```

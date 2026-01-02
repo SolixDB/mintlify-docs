@@ -1,11 +1,11 @@
 ---
 title: "Introduction"
-description: "Welcome to SolixDB API documentation - Access 390M+ Solana transaction instruction records"
+description: "Welcome to SolixDB API documentation - Access Solana DeFi data via REST, GraphQL, or SQL"
 ---
 
 ## Welcome to SolixDB
 
-SolixDB provides fast and flexible access to **390M+ Solana transaction instruction records** stored in ClickHouse. Whether you're building analytics dashboards, monitoring protocol activity, or conducting research, our API gives you the power to query transaction data with ease.
+SolixDB provides fast and flexible access to **Solana DeFi transaction data** from major DEX protocols. Whether you're building trading bots, analytics dashboards, ML models, or conducting research, our API gives you the power to query DEX data with ease.
 
 <CardGroup cols={2}>
   <Card
@@ -38,26 +38,26 @@ SolixDB provides fast and flexible access to **390M+ Solana transaction instruct
   </Card>
 </CardGroup>
 
-## Features
+## Why SolixDB?
 
 <AccordionGroup>
-  <Accordion title="REST API" icon="code">
-    Fast, standardized endpoints for common queries with intuitive query parameters and consistent response formats.
+  <Accordion title="DEX Data Coverage" icon="database">
+    Comprehensive Solana DEX data from Jupiter, Pump.fun, Raydium, Orca, and more. We're continuously expanding to cover additional protocols.
   </Accordion>
-  <Accordion title="SQL Query API" icon="database">
-    Execute read-only SQL queries directly against the database for maximum flexibility and custom analysis.
+  <Accordion title="Multiple API Interfaces" icon="code">
+    Choose REST, GraphQL, or SQL—use the interface that fits your workflow. All three access the same powerful data.
   </Accordion>
-  <Accordion title="GraphQL API" icon="network-wired">
-    Flexible querying with exactly the data you need, reducing over-fetching and improving performance.
+  <Accordion title="Lightning Fast" icon="bolt">
+    Optimized queries with sub-500ms response times, powered by ClickHouse's columnar storage engine and intelligent caching.
   </Accordion>
-  <Accordion title="High Performance" icon="bolt">
-    Optimized queries with < 500ms response times, powered by ClickHouse's columnar storage engine.
+  <Accordion title="Production Ready" icon="shield">
+    Reliable infrastructure with real-time data updates, high availability, and built-in rate limiting.
   </Accordion>
-  <Accordion title="Caching" icon="layer-group">
-    Redis caching for improved performance and reduced database load.
+  <Accordion title="Perfect for ML & Research" icon="brain">
+    Clean, structured data ready for model training, backtesting, and academic research on DeFi markets.
   </Accordion>
-  <Accordion title="Rate Limiting" icon="shield">
-    IP-based rate limiting to prevent abuse and ensure fair usage.
+  <Accordion title="Developer First" icon="user-gear">
+    Simple authentication, comprehensive documentation, and examples to get you building quickly.
   </Accordion>
 </AccordionGroup>
 
@@ -95,6 +95,17 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```
 </CodeGroup>
 
+## Use Cases
+
+SolixDB powers a wide range of applications:
+
+- **Trading Bots**: Backtest strategies against historical DEX trades
+- **Analytics Dashboards**: Monitor protocol performance and trends
+- **ML Models**: Train models for price prediction, rug pull detection, and more
+- **Research**: Export datasets for academic papers on DeFi and market microstructure
+- **Whale Tracking**: Monitor large holders and their trading patterns
+- **Protocol Comparison**: Compare performance across Jupiter, Raydium, Orca, and more
+
 ## Next Steps
 
 <CardGroup cols={3}>
@@ -103,7 +114,7 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
     icon="key"
     href="/authentication"
   >
-    Learn how to authenticate your requests with API keys.
+    Learn about API access and IP-based rate limiting.
   </Card>
   <Card
     title="Error Handling"
@@ -122,5 +133,5 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 </CardGroup>
 
 <Note>
-  **Need help?** For questions or issues, please contact support or open an issue in our repository.
+  **Need help?** For questions or issues, please contact support or open an issue in our [GitHub repository](https://github.com/solixdb).
 </Note>

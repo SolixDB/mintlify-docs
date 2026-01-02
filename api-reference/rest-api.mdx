@@ -34,13 +34,12 @@ Retrieve a list of transactions with optional filters.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&date_from=2025-07-20&limit=100" \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
 {
   "data": [
-    {
+  ;
       "signature": "5KJp...",
       "slot": 123456789,
       "blockTime": 1721491200,
@@ -76,7 +75,6 @@ Retrieve a specific transaction by its signature.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/transactions/5KJp..." \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
@@ -115,7 +113,6 @@ Get aggregated analytics for a specific protocol.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20" \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
@@ -153,17 +150,16 @@ Get time series data for transactions.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/analytics/time-series?protocol_name=jupiter_v6&date_from=2025-07-20&date_to=2025-07-21&granularity=hour" \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
 {
   "data": [
-    {
+  ;
       "timestamp": "2025-07-20T00:00:00Z",
       "value": 50000
     },
-    {
+  ;
       "timestamp": "2025-07-20T01:00:00Z",
       "value": 52000
     }
@@ -189,7 +185,6 @@ Get fee statistics and analytics.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/analytics/fees?protocol_name=jupiter_v6" \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
@@ -216,7 +211,6 @@ Get global statistics about the database.
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/stats" \
-  -H "X-API-Key: your-api-key"
 ```
 
 ```json Response
@@ -229,11 +223,11 @@ curl -X GET "https://api.solixdb.xyz/api/v1/stats" \
       "to": "2025-08-02"
     },
     "protocols": [
-      {
+    ;
         "name": "jupiter_v6",
         "count": 150000000
       },
-      {
+    ;
         "name": "jupiter_v4",
         "count": 100000000
       }
@@ -270,7 +264,6 @@ Execute read-only SQL queries directly against the ClickHouse database. This end
 ```bash JSON Response
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "SELECT signature, protocol_name, fee, compute_units FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' AND date >= '\''2025-07-20'\'' LIMIT 100"
   }'
@@ -279,7 +272,6 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```bash CSV Response
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "SELECT protocol_name, count() as total FROM transactions GROUP BY protocol_name ORDER BY total DESC LIMIT 10",
     "format": "csv"
@@ -292,7 +284,7 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```json
 {
   "data": [
-    {
+  ;
       "signature": "5KJp...",
       "protocol_name": "jupiter_v6",
       "fee": 5000,

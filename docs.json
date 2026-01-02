@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "SolixDB API",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1362FF",
+    "light": "#4E89FF",
+    "dark": "#0A4FCC"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -53,8 +53,13 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/SolixDB",
+          "href": "https://github.com/solixdb",
           "icon": "github"
+        },
+        {
+          "anchor": "Website",
+          "href": "https://solixdb.xyz",
+          "icon": "globe"
         }
       ]
     }
@@ -66,14 +71,18 @@
   "navbar": {
     "links": [
       {
+        "label": "Website",
+        "href": "https://solixdb.xyz"
+      },
+      {
         "label": "Support",
         "href": "mailto:support@solixdb.xyz"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Get API Key",
-      "href": "mailto:support@solixdb.xyz"
+      "label": "Get Started",
+      "href": "/getting-started"
     }
   },
   "contextual": {
@@ -91,7 +100,22 @@
   "footer": {
     "socials": {
       "x": "https://x.com/solixdb",
-      "github": "https://github.com/SolixDB"
-    }
+      "github": "https://github.com/solixdb"
+    },
+    "links": [
+      {
+        "group": "Product",
+        "pages": [
+          {
+            "name": "Website",
+            "href": "https://solixdb.xyz"
+          },
+          {
+            "name": "AnchorLabs",
+            "href": "https://anchorlabs.solixdb.xyz"
+          }
+        ]
+      }
+    ]
   }
 }

@@ -1,28 +1,53 @@
 ---
 title: "Examples"
-description: "Practical examples for common use cases"
+description: "Practical examples for common use cases with SolixDB API"
 ---
 
-This page contains practical examples for common use cases with the SolixDB API.
+This page contains practical examples for common use cases with the SolixDB API. Use these examples to build trading bots, analytics dashboards, ML models, and more.
+
+## Common Use Cases
+
+<CardGroup cols={2}>
+  <Card
+    title="Trading Bot Backtesting"
+    icon="chart-line"
+  >
+    Test strategies against historical DEX trades with prices and volumes.
+  </Card>
+  <Card
+    title="Analytics Dashboards"
+    icon="chart-bar"
+  >
+    Monitor protocol performance, volumes, and trends in real-time.
+  </Card>
+  <Card
+    title="ML Model Training"
+    icon="brain"
+  >
+    Export clean datasets for training price prediction and rug pull detection models.
+  </Card>
+  <Card
+    title="Whale Tracking"
+    icon="users"
+  >
+    Monitor large holders and their trading patterns across protocols.
+  </Card>
+</CardGroup>
 
 ## REST API Examples
 
 ### Get Recent Jupiter V6 Transactions
 
+Query recent transactions from Jupiter V6:
+
 <CodeGroup>
 ```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10" \
-  -H "X-API-Key: your-api-key"
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10',
-  {
-    headers: {
-      'X-API-Key': 'your-api-key'
-    }
-  }
+  'https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10'
 );
 const data = await response.json();
 console.log(data);
@@ -33,7 +58,6 @@ import requests
 
 response = requests.get(
     'https://api.solixdb.xyz/api/v1/transactions',
-    headers={'X-API-Key': 'your-api-key'},
     params={'protocol_name': 'jupiter_v6', 'limit': 10}
 )
 print(response.json())
@@ -42,20 +66,16 @@ print(response.json())
 
 ### Get Transactions for a Date Range
 
+Filter transactions by date range for backtesting or analysis:
+
 <CodeGroup>
 ```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100" \
-  -H "X-API-Key: your-api-key"
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100"
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100',
-  {
-    headers: {
-      'X-API-Key': 'your-api-key'
-    }
-  }
+  'https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100'
 );
 const data = await response.json();
 console.log(data);
@@ -66,7 +86,6 @@ import requests
 
 response = requests.get(
     'https://api.solixdb.xyz/api/v1/transactions',
-    headers={'X-API-Key': 'your-api-key'},
     params={
         'date_from': '2025-07-20',
         'date_to': '2025-07-21',
@@ -79,20 +98,16 @@ print(response.json())
 
 ### Get Protocol Analytics
 
+Analyze protocol performance metrics:
+
 <CodeGroup>
 ```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20" \
-  -H "X-API-Key: your-api-key"
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20"
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20',
-  {
-    headers: {
-      'X-API-Key': 'your-api-key'
-    }
-  }
+  'https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20'
 );
 const data = await response.json();
 console.log(data);
@@ -103,7 +118,6 @@ import requests
 
 response = requests.get(
     'https://api.solixdb.xyz/api/v1/analytics/protocols',
-    headers={'X-API-Key': 'your-api-key'},
     params={
         'protocol_name': 'jupiter_v6',
         'date_from': '2025-07-20'
@@ -113,15 +127,167 @@ print(response.json())
 ```
 </CodeGroup>
 
+### Compare Multiple Protocols
+
+Compare performance across different DEX protocols:
+
+<CodeGroup>
+```bash
+# Get Jupiter V6 data
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20"
+
+# Get Raydium data
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=raydium_amm_v3&date_from=2025-07-20"
+```
+
+```javascript JavaScript
+async function compareProtocols() {
+  const protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun'];
+  const results = {};
+  
+  for (const protocol of protocols) {
+    const response = await fetch(
+      `https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=${protocol}&date_from=2025-07-20`
+    );
+    results[protocol] = await response.json();
+  }
+  
+  console.log(results);
+}
+
+compareProtocols();
+```
+
+```python Python
+import requests
+
+protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun']
+results = {}
+
+for protocol in protocols:
+    response = requests.get(
+        'https://api.solixdb.xyz/api/v1/analytics/protocols',
+        params={
+            'protocol_name': protocol,
+            'date_from': '2025-07-20'
+        }
+    )
+    results[protocol] = response.json()
+
+print(results)
+```
+</CodeGroup>
+
+## GraphQL Examples
+
+### Flexible Field Selection
+
+Query only the fields you need:
+
+<CodeGroup>
+```bash
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ transactions(protocolName: \"jupiter_v6\", limit: 10) { signature protocolName fee blockTime } }"
+  }'
+```
+
+```javascript JavaScript
+const query = `
+  query {
+    transactions(protocolName: "jupiter_v6", limit: 10) {
+      signature
+      protocolName
+      fee
+      blockTime
+    }
+  }
+`;
+
+const response = await fetch('https://api.solixdb.xyz/graphql', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+query = """
+  query {
+    transactions(protocolName: "jupiter_v6", limit: 10) {
+      signature
+      protocolName
+      fee
+      blockTime
+    }
+  }
+"""
+
+response = requests.post(
+    'https://api.solixdb.xyz/graphql',
+    json={'query': query}
+)
+print(response.json())
+```
+</CodeGroup>
+
+### Complex Filtering
+
+Use GraphQL for complex queries with multiple filters:
+
+<CodeGroup>
+```bash
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ transactions(protocolName: \"pump_fun\", dateFrom: \"2025-07-20\", dateTo: \"2025-07-21\", limit: 100) { signature protocolName fee blockTime } }"
+  }'
+```
+
+```javascript JavaScript
+const query = `
+  query {
+    transactions(
+      protocolName: "pump_fun"
+      dateFrom: "2025-07-20"
+      dateTo: "2025-07-21"
+      limit: 100
+    ) {
+      signature
+      protocolName
+      fee
+      blockTime
+    }
+  }
+`;
+
+const response = await fetch('https://api.solixdb.xyz/graphql', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query }),
+});
+
+const data = await response.json();
+console.log(data);
+```
+</CodeGroup>
+
 ## SQL Query Examples
 
 ### Basic SELECT Query
+
+Execute custom SQL for maximum flexibility:
 
 <CodeGroup>
 ```bash
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
     "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 10"
   }'
@@ -130,14 +296,12 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```javascript JavaScript
 const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-key'
-  },
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     query: "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
-  })
+  }),
 });
+
 const data = await response.json();
 console.log(data);
 ```
@@ -147,7 +311,6 @@ import requests
 
 response = requests.post(
     'https://api.solixdb.xyz/api/v1/query',
-    headers={'X-API-Key': 'your-api-key'},
     json={
         'query': "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
     }
@@ -156,29 +319,28 @@ print(response.json())
 ```
 </CodeGroup>
 
-### Aggregation Query
+### Aggregation Queries
+
+Calculate metrics and statistics:
 
 <CodeGroup>
 ```bash
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
-    "query": "SELECT protocol_name, count() as total, avg(fee) as avg_fee FROM transactions WHERE date >= '\''2025-07-20'\'' GROUP BY protocol_name ORDER BY total DESC LIMIT 10"
+    "query": "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '\''2025-07-20'\'' GROUP BY protocol_name"
   }'
 ```
 
 ```javascript JavaScript
 const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your-api-key'
-  },
+  headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    query: "SELECT protocol_name, count() as total, avg(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name ORDER BY total DESC LIMIT 10"
-  })
+    query: "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name"
+  }),
 });
+
 const data = await response.json();
 console.log(data);
 ```
@@ -188,214 +350,162 @@ import requests
 
 response = requests.post(
     'https://api.solixdb.xyz/api/v1/query',
-    headers={'X-API-Key': 'your-api-key'},
     json={
-        'query': "SELECT protocol_name, count() as total, avg(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name ORDER BY total DESC LIMIT 10"
+        'query': "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name"
     }
 )
 print(response.json())
 ```
 </CodeGroup>
 
-### Export as CSV
+### Export Data for ML Training
+
+Export large datasets for model training:
 
 <CodeGroup>
 ```bash
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
   -d '{
-    "query": "SELECT signature, protocol_name, fee, compute_units FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 1000",
-    "format": "csv"
-  }' > transactions.csv
+    "query": "SELECT * FROM transactions WHERE protocol_name = '\''pump_fun'\'' AND date >= '\''2025-07-01'\'' AND date <= '\''2025-07-31'\'' LIMIT 10000"
+  }' > training_data.json
+```
+
+```javascript JavaScript
+// For large datasets, consider pagination
+async function exportTrainingData() {
+  const limit = 1000;
+  let offset = 0;
+  const allData = [];
+  
+  while (true) {
+    const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `SELECT * FROM transactions WHERE protocol_name = 'pump_fun' AND date >= '2025-07-01' AND date <= '2025-07-31' LIMIT ${limit} OFFSET ${offset}`
+      }),
+    });
+    
+    const data = await response.json();
+    if (!data.data || data.data.length === 0) break;
+    
+    allData.push(...data.data);
+    offset += limit;
+  }
+  
+  // Save to file or process
+  console.log(`Exported ${allData.length} records`);
+  return allData;
+}
+
+exportTrainingData();
 ```
 
 ```python Python
 import requests
+import json
 
-response = requests.post(
-    'https://api.solixdb.xyz/api/v1/query',
-    headers={'X-API-Key': 'your-api-key'},
-    json={
-        'query': "SELECT signature, protocol_name, fee, compute_units FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 1000",
-        'format': 'csv'
+def export_training_data():
+    limit = 1000
+    offset = 0
+    all_data = []
+    
+    while True:
+        response = requests.post(
+            'https://api.solixdb.xyz/api/v1/query',
+            json={
+                'query': f"SELECT * FROM transactions WHERE protocol_name = 'pump_fun' AND date >= '2025-07-01' AND date <= '2025-07-31' LIMIT {limit} OFFSET {offset}"
+            }
+        )
+        
+        data = response.json()
+        if not data.get('data') or len(data['data']) == 0:
+            break
+        
+        all_data.extend(data['data'])
+        offset += limit
+    
+    # Save to file
+    with open('training_data.json', 'w') as f:
+        json.dump(all_data, f)
+    
+    print(f"Exported {len(all_data)} records")
+    return all_data
+
+export_training_data()
+```
+</CodeGroup>
+
+## Real-World Scenarios
+
+### Building a Trading Bot
+
+<Accordion title="Backtest a Trading Strategy">
+Use historical data to test your trading strategy:
+
+```python
+import requests
+import pandas as pd
+
+# Fetch historical Pump.fun trades
+response = requests.get(
+    'https://api.solixdb.xyz/api/v1/transactions',
+    params={
+        'protocol_name': 'pump_fun',
+        'date_from': '2025-07-01',
+        'date_to': '2025-07-31',
+        'limit': 10000
     }
 )
 
-with open('transactions.csv', 'w') as f:
-    f.write(response.text)
+data = response.json()['data']
+df = pd.DataFrame(data)
+
+# Your backtesting logic here
+# Analyze price movements, volumes, etc.
 ```
-</CodeGroup>
+</Accordion>
 
-## GraphQL Examples
+### Creating an Analytics Dashboard
 
-### Query Transactions
+<Accordion title="Monitor Protocol Performance">
+Build real-time dashboards showing protocol metrics:
 
-<CodeGroup>
-```graphql
-query GetTransactions {
-  transactions(
-    protocolName: "jupiter_v6"
-    dateFrom: "2025-07-20"
-    limit: 10
-  ) {
-    signature
-    protocolName
-    fee
-    computeUnits
-    blockTime
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "query": "{ transactions(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", limit: 10) { signature protocolName fee computeUnits blockTime } }"
-  }'
-```
-</CodeGroup>
-
-### Query Protocol Analytics
-
-<CodeGroup>
-```graphql
-query GetProtocolAnalytics {
-  protocolAnalytics(
-    protocolName: "jupiter_v6"
-    dateFrom: "2025-07-20"
-  ) {
-    protocolName
-    totalTransactions
-    totalFees
-    averageFee
-    averageComputeUnits
-    uniquePrograms
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "query": "{ protocolAnalytics(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\") { protocolName totalTransactions totalFees averageFee averageComputeUnits uniquePrograms } }"
-  }'
-```
-</CodeGroup>
-
-### Complex Query with Multiple Fields
-
-<CodeGroup>
-```graphql
-query GetAnalytics {
-  protocolAnalytics(protocolName: "jupiter_v6") {
-    protocolName
-    totalTransactions
-    totalFees
-    averageFee
-  }
-  
-  feeAnalytics(protocolName: "jupiter_v6") {
-    minFee
-    maxFee
-    avgFee
-    medianFee
-    p95Fee
-    p99Fee
-  }
-  
-  stats {
-    totalTransactions
-    dateRange {
-      from
-      to
-    }
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: your-api-key" \
-  -d '{
-    "query": "{ protocolAnalytics(protocolName: \"jupiter_v6\") { protocolName totalTransactions totalFees averageFee } feeAnalytics(protocolName: \"jupiter_v6\") { minFee maxFee avgFee medianFee p95Fee p99Fee } stats { totalTransactions dateRange { from to } } }"
-  }'
-```
-</CodeGroup>
-
-## Real-World Use Cases
-
-### Monitor Protocol Activity
-
-```typescript
-async function monitorProtocol(protocolName: string) {
-  const [analytics, timeSeries] = await Promise.all([
-    getProtocolAnalytics(protocolName),
-    getTimeSeries(protocolName, '2025-07-20', '2025-07-21', 'hour')
-  ]);
-  
-  console.log(`Protocol: ${analytics.protocolName}`);
-  console.log(`Total Transactions: ${analytics.totalTransactions}`);
-  console.log(`Average Fee: ${analytics.averageFee}`);
-  console.log(`Hourly Activity:`, timeSeries);
-}
-
-monitorProtocol('jupiter_v6');
-```
-
-### Compare Protocols
-
-```typescript
-async function compareProtocols(protocols: string[]) {
-  const comparisons = await Promise.all(
-    protocols.map(name => getProtocolAnalytics(name))
+```javascript
+async function getProtocolMetrics(protocolName) {
+  const response = await fetch(
+    `https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=${protocolName}&date_from=2025-07-20`
   );
-  
-  return comparisons.map(analytics => ({
-    name: analytics.protocolName,
-    transactions: analytics.totalTransactions,
-    avgFee: analytics.averageFee,
-    efficiency: analytics.averageComputeUnits
-  }));
+  return await response.json();
 }
 
-const comparison = await compareProtocols(['jupiter_v6', 'jupiter_v4', 'raydium_amm_v3']);
-console.table(comparison);
+// Get metrics for multiple protocols
+const protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun'];
+const metrics = await Promise.all(
+  protocols.map(p => getProtocolMetrics(p))
+);
+
+// Display in your dashboard
+console.log(metrics);
 ```
+</Accordion>
 
-### Track Fee Trends
+## Next Steps
 
-```typescript
-async function trackFeeTrends(protocolName: string, days: number) {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-  
-  const timeSeries = await getTimeSeries(
-    protocolName,
-    formatDate(startDate),
-    formatDate(endDate),
-    'day'
-  );
-  
-  const feeAnalytics = await getFeeAnalytics(protocolName);
-  
-  return {
-    trends: timeSeries,
-    statistics: feeAnalytics
-  };
-}
-
-const trends = await trackFeeTrends('jupiter_v6', 7);
-console.log(trends);
-```
-
-<Tip>
-  For more detailed API reference, see our [REST API](/api-reference/rest-api) and [GraphQL API](/api-reference/graphql-api) documentation.
-</Tip>
-
+<CardGroup cols={2}>
+  <Card
+    title="API Reference"
+    icon="code"
+    href="/api-reference/rest-api"
+  >
+    Explore all available endpoints and parameters.
+  </Card>
+  <Card
+    title="Error Handling"
+    icon="triangle-exclamation"
+    href="/error-handling"
+  >
+    Learn how to handle errors gracefully.
+  </Card>
+</CardGroup>
