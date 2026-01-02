@@ -1,0 +1,137 @@
+---
+title: "Authentication"
+description: "Learn how to authenticate your API requests"
+---
+
+The SolixDB API uses API key authentication for all requests.
+
+## API Key Header
+
+Include your API key in the request header:
+
+```
+X-API-Key: your-api-key-here
+```
+
+## Obtaining an API Key
+
+Contact support to obtain an API key. API keys are unique identifiers that:
+
+- Authenticate your requests
+- Track your usage
+- Enforce rate limits
+
+## Using API Keys
+
+### REST API
+
+<CodeGroup>
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions" \
+  -H "X-API-Key: your-api-key"
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.solixdb.xyz/api/v1/transactions', {
+  headers: {
+    'X-API-Key': 'your-api-key'
+  }
+});
+```
+
+```python Python
+import requests
+
+headers = {
+    'X-API-Key': 'your-api-key'
+}
+
+response = requests.get(
+    'https://api.solixdb.xyz/api/v1/transactions',
+    headers=headers
+)
+```
+</CodeGroup>
+
+### GraphQL
+
+<CodeGroup>
+```bash
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{"query": "{ stats { totalTransactions } }"}'
+```
+
+```javascript JavaScript
+const response = await fetch('https://api.solixdb.xyz/graphql', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-api-key'
+  },
+  body: JSON.stringify({
+    query: '{ stats { totalTransactions } }'
+  })
+});
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.solixdb.xyz/graphql',
+    json={'query': '{ stats { totalTransactions } }'},
+    headers={'X-API-Key': 'your-api-key'}
+)
+```
+</CodeGroup>
+
+## Error Responses
+
+### Missing API Key
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "API key is required"
+}
+```
+
+**Status Code:** `401 Unauthorized`
+
+### Invalid API Key
+
+```json
+{
+  "error": "Forbidden",
+  "message": "Invalid API key"
+}
+```
+
+**Status Code:** `403 Forbidden`
+
+## Security Best Practices
+
+<AccordionGroup>
+  <Accordion title="Never commit API keys" icon="lock">
+    Never commit API keys to version control. Use environment variables or secure secret management systems.
+  </Accordion>
+  <Accordion title="Use environment variables" icon="key">
+    Store API keys in environment variables to keep them secure and separate from your code.
+  </Accordion>
+  <Accordion title="Rotate API keys regularly" icon="refresh">
+    Rotate your API keys periodically to maintain security, especially if you suspect they may have been compromised.
+  </Accordion>
+  <Accordion title="Use different keys for environments" icon="layer-group">
+    Use different API keys for development and production environments to limit the impact of key exposure.
+  </Accordion>
+  <Accordion title="Monitor API key usage" icon="chart-line">
+    Monitor your API key usage for suspicious activity and unexpected patterns.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  For more information on error handling, see our [Error Handling](/error-handling) guide.
+</Tip>
+

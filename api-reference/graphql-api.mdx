@@ -1,0 +1,415 @@
+---
+title: "GraphQL API Reference"
+description: "Complete GraphQL API reference with queries, types, and schema"
+---
+
+The GraphQL API provides flexible querying with exactly the data you need.
+
+## Endpoint
+
+```
+POST /graphql
+```
+
+## Authentication
+
+The API requires authentication via API key. Include it in the request header:
+
+```
+X-API-Key: your-api-key
+```
+
+## Schema
+
+### Types
+
+#### Transaction
+
+```graphql
+type Transaction {
+  signature: String!
+  slot: Int!
+  blockTime: Int!
+  programId: String!
+  protocolName: String!
+  instructionType: String!
+  fee: Int!
+  computeUnits: Int!
+  accountsCount: Int!
+  date: String!
+  hour: Int!
+}
+```
+
+#### ProtocolAnalytics
+
+```graphql
+type ProtocolAnalytics {
+  protocolName: String!
+  totalTransactions: Int!
+  totalFees: Int!
+  totalComputeUnits: Int!
+  averageFee: Float!
+  averageComputeUnits: Float!
+  uniquePrograms: Int!
+  dateFrom: String
+  dateTo: String
+}
+```
+
+#### TimeSeriesPoint
+
+```graphql
+type TimeSeriesPoint {
+  timestamp: String!
+  value: Int!
+  label: String
+}
+```
+
+#### FeeAnalytics
+
+```graphql
+type FeeAnalytics {
+  minFee: Int!
+  maxFee: Int!
+  avgFee: Float!
+  medianFee: Float!
+  p95Fee: Float!
+  p99Fee: Float!
+  totalFees: Int!
+}
+```
+
+#### Stats
+
+```graphql
+type Stats {
+  totalTransactions: Int!
+  totalFailedTransactions: Int!
+  dateRange: DateRange!
+  protocols: [ProtocolCount!]!
+}
+
+type DateRange {
+  from: String!
+  to: String!
+}
+
+type ProtocolCount {
+  name: String!
+  count: Int!
+}
+```
+
+## Queries
+
+### transactions
+
+Query transactions with filters.
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `protocolName` | String | No | Filter by protocol |
+| `programId` | String | No | Filter by program ID |
+| `dateFrom` | String | No | Start date (YYYY-MM-DD) |
+| `dateTo` | String | No | End date (YYYY-MM-DD) |
+| `signature` | String | No | Filter by signature |
+| `limit` | Int | No | Number of results (default: 100) |
+| `offset` | Int | No | Number to skip (default: 0) |
+
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    protocolName: "jupiter_v6"
+    dateFrom: "2025-07-20"
+    limit: 10
+  ) {
+    signature
+    protocolName
+    fee
+    computeUnits
+    blockTime
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ transactions(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", limit: 10) { signature protocolName fee computeUnits blockTime } }"
+  }'
+```
+</CodeGroup>
+
+### transaction
+
+Get a single transaction by signature.
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `signature` | String | Yes | Transaction signature |
+
+<CodeGroup>
+```graphql
+query {
+  transaction(signature: "5KJp...") {
+    signature
+    protocolName
+    fee
+    computeUnits
+    blockTime
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ transaction(signature: \"5KJp...\") { signature protocolName fee computeUnits blockTime } }"
+  }'
+```
+</CodeGroup>
+
+### protocolAnalytics
+
+Get analytics for a protocol.
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `protocolName` | String | Yes | Protocol name |
+| `dateFrom` | String | No | Start date |
+| `dateTo` | String | No | End date |
+
+<CodeGroup>
+```graphql
+query {
+  protocolAnalytics(
+    protocolName: "jupiter_v6"
+    dateFrom: "2025-07-20"
+  ) {
+    protocolName
+    totalTransactions
+    totalFees
+    averageFee
+    uniquePrograms
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ protocolAnalytics(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\") { protocolName totalTransactions totalFees averageFee uniquePrograms } }"
+  }'
+```
+</CodeGroup>
+
+### timeSeries
+
+Get time series data.
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `protocolName` | String | No | Filter by protocol |
+| `dateFrom` | String | Yes | Start date |
+| `dateTo` | String | Yes | End date |
+| `granularity` | String | No | `hour` or `day` (default: `hour`) |
+
+<CodeGroup>
+```graphql
+query {
+  timeSeries(
+    protocolName: "jupiter_v6"
+    dateFrom: "2025-07-20"
+    dateTo: "2025-07-21"
+    granularity: "hour"
+  ) {
+    timestamp
+    value
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ timeSeries(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", dateTo: \"2025-07-21\", granularity: \"hour\") { timestamp value } }"
+  }'
+```
+</CodeGroup>
+
+### feeAnalytics
+
+Get fee analytics.
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `protocolName` | String | No | Filter by protocol |
+| `dateFrom` | String | No | Start date |
+| `dateTo` | String | No | End date |
+
+<CodeGroup>
+```graphql
+query {
+  feeAnalytics(protocolName: "jupiter_v6") {
+    minFee
+    maxFee
+    avgFee
+    medianFee
+    p95Fee
+    p99Fee
+    totalFees
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ feeAnalytics(protocolName: \"jupiter_v6\") { minFee maxFee avgFee medianFee p95Fee p99Fee totalFees } }"
+  }'
+```
+</CodeGroup>
+
+### stats
+
+Get global statistics.
+
+<CodeGroup>
+```graphql
+query {
+  stats {
+    totalTransactions
+    totalFailedTransactions
+    dateRange {
+      from
+      to
+    }
+    protocols {
+      name
+      count
+    }
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "query": "{ stats { totalTransactions totalFailedTransactions dateRange { from to } protocols { name count } } }"
+  }'
+```
+</CodeGroup>
+
+## Example Requests
+
+### Using JavaScript
+
+```javascript
+const query = `
+  query {
+    transactions(protocolName: "jupiter_v6", limit: 5) {
+      signature
+      protocolName
+      fee
+    }
+  }
+`;
+
+const response = await fetch('https://api.solixdb.xyz/graphql', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your-api-key'
+  },
+  body: JSON.stringify({ query })
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+### Using Python
+
+```python
+import requests
+
+query = """
+{
+  transactions(protocolName: "jupiter_v6", limit: 5) {
+    signature
+    protocolName
+    fee
+  }
+}
+"""
+
+response = requests.post(
+    'https://api.solixdb.xyz/graphql',
+    json={'query': query},
+    headers={'X-API-Key': 'your-api-key'}
+)
+
+data = response.json()
+print(data)
+```
+
+## GraphQL Playground
+
+You can use any GraphQL client or IDE to explore the API:
+
+<CardGroup cols={2}>
+  <Card
+    title="GraphQL Playground"
+    icon="code"
+    href="https://github.com/graphql/graphql-playground"
+  >
+    Interactive GraphQL IDE
+  </Card>
+  <Card
+    title="Apollo Studio"
+    icon="rocket"
+    href="https://studio.apollographql.com/"
+  >
+    GraphQL development tools
+  </Card>
+  <Card
+    title="Insomnia"
+    icon="network-wired"
+    href="https://insomnia.rest/"
+  >
+    API client with GraphQL support
+  </Card>
+  <Card
+    title="Postman"
+    icon="envelope"
+    href="https://www.postman.com/"
+  >
+    Popular API testing tool
+  </Card>
+</CardGroup>
+

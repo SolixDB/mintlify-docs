@@ -1,97 +1,126 @@
 ---
 title: "Introduction"
-description: "Welcome to the new home for your documentation"
+description: "Welcome to SolixDB API documentation - Access 390M+ Solana transaction instruction records"
 ---
 
-## Setting up
+## Welcome to SolixDB
 
-Get your documentation site up and running in minutes.
+SolixDB provides fast and flexible access to **390M+ Solana transaction instruction records** stored in ClickHouse. Whether you're building analytics dashboards, monitoring protocol activity, or conducting research, our API gives you the power to query transaction data with ease.
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="Get Started"
+    icon="rocket"
+    href="/getting-started"
   >
-    Edit your docs locally and preview them in real time.
+    Follow our quickstart guide to make your first API request in minutes.
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
+    title="REST API"
     icon="code"
-    href="/essentials/code"
+    href="/api-reference/rest-api"
   >
-    Add sample code to demonstrate how to use your product.
+    Explore our RESTful endpoints for standardized queries.
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="GraphQL API"
+    icon="network-wired"
+    href="/api-reference/graphql-api"
   >
-    Display images and other media.
+    Query exactly the data you need with our flexible GraphQL API.
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Examples"
+    icon="book"
+    href="/examples"
   >
-    Write once and reuse across your docs.
+    See practical examples for common use cases.
   </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<AccordionGroup>
+  <Accordion title="REST API" icon="code">
+    Fast, standardized endpoints for common queries with intuitive query parameters and consistent response formats.
+  </Accordion>
+  <Accordion title="SQL Query API" icon="database">
+    Execute read-only SQL queries directly against the database for maximum flexibility and custom analysis.
+  </Accordion>
+  <Accordion title="GraphQL API" icon="network-wired">
+    Flexible querying with exactly the data you need, reducing over-fetching and improving performance.
+  </Accordion>
+  <Accordion title="High Performance" icon="bolt">
+    Optimized queries with < 500ms response times, powered by ClickHouse's columnar storage engine.
+  </Accordion>
+  <Accordion title="Caching" icon="layer-group">
+    Redis caching for improved performance and reduced database load.
+  </Accordion>
+  <Accordion title="Rate Limiting" icon="shield">
+    IP-based rate limiting to prevent abuse and ensure fair usage.
+  </Accordion>
+</AccordionGroup>
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://api.solixdb.xyz
+```
+
+## Quick Start
+
+Make your first request in seconds:
+
+<CodeGroup>
+```bash REST API
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
+```
+
+```bash GraphQL
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ transactions(protocolName: \"jupiter_v6\", limit: 10) { signature protocolName fee } }"
+  }'
+```
+
+```bash SQL Query
+curl -X POST "https://api.solixdb.xyz/api/v1/query" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 10"
+  }'
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn how to authenticate your requests with API keys.
+  </Card>
+  <Card
+    title="Error Handling"
+    icon="triangle-exclamation"
+    href="/error-handling"
+  >
+    Understand error responses and how to handle them.
+  </Card>
+  <Card
+    title="Rate Limiting"
+    icon="clock"
+    href="/rate-limiting"
+  >
+    Learn about rate limits and best practices.
+  </Card>
+</CardGroup>
+
+<Note>
+  **Need help?** For questions or issues, please contact support or open an issue in our repository.
+</Note>
