@@ -35,15 +35,16 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "REST API",
+            "group": "GraphQL API",
             "pages": [
-              "api-reference/rest-api"
+              "api-reference/graphql-api",
+              "api-reference/migration-guide"
             ]
           },
           {
-            "group": "GraphQL API",
+            "group": "REST API (Legacy)",
             "pages": [
-              "api-reference/graphql-api"
+              "api-reference/rest-api"
             ]
           }
         ]

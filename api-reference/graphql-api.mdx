@@ -1,9 +1,9 @@
 ---
 title: "GraphQL API Reference"
-description: "Complete GraphQL API reference with queries, types, and schema"
+description: "Complete GraphQL API reference with queries, mutations, types, and schema"
 ---
 
-The GraphQL API provides flexible querying with exactly the data you need.
+The GraphQL API provides flexible, composable query primitives for querying 929M+ Solana transaction instruction records. Unlike REST endpoints with predefined use cases, GraphQL lets you build exactly the queries you need.
 
 ## Endpoint
 
@@ -11,90 +11,372 @@ The GraphQL API provides flexible querying with exactly the data you need.
 POST /graphql
 ```
 
+**Base URL:** `https://api.solixdb.xyz/graphql`
+
 ## Authentication
 
-The API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address.
+The API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address based on query complexity.
 
-## Schema
+<Info>
+  For details on rate limiting and complexity scoring, see our [Rate Limiting](/rate-limiting) and [Query Complexity](#query-complexity) sections.
+</Info>
 
-### Types
+## Custom Scalars
 
-#### Transaction
+The API uses several custom scalar types:
+
+| Scalar | Description | Format | Example |
+|--------|-------------|--------|---------|
+| `Date` | Date scalar type | YYYY-MM-DD | `"2025-01-15"` |
+| `Signature` | Solana transaction signature | Base58 encoded string (64-90 chars) | `"5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"` |
+| `ProgramID` | Solana program ID | Base58 encoded string (32-44 chars) | `"JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"` |
+| `BigInt` | Long integer type | Serialized as string | `"1234567890123456789"` |
+
+## Core Types
+
+### Transaction
+
+Represents a Solana transaction instruction record.
 
 ```graphql
 type Transaction {
-  signature: String!
-  slot: Int!
-  blockTime: Int!
-  programId: String!
+  # Core fields (always present)
+  signature: Signature!
+  slot: BigInt!
+  blockTime: BigInt!
+  programId: ProgramID!
   protocolName: String!
   instructionType: String!
-  fee: Int!
-  computeUnits: Int!
+  fee: BigInt!
+  computeUnits: BigInt!
   accountsCount: Int!
-  date: String!
+  date: Date!
   hour: Int!
+  
+  # Aggregation fields (only present when groupBy is used)
+  protocol: String
+  count: BigInt
+  sumFee: BigInt
+  avgFee: Float
+  minFee: BigInt
+  maxFee: BigInt
+  p50Fee: Float
+  p95Fee: Float
+  p99Fee: Float
+  sumComputeUnits: BigInt
+  avgComputeUnits: Float
+  minComputeUnits: BigInt
+  maxComputeUnits: BigInt
+  p50ComputeUnits: Float
+  p95ComputeUnits: Float
+  p99ComputeUnits: Float
+  sumAccountsCount: BigInt
+  avgAccountsCount: Float
+  dayOfWeek: Int
+  week: Date
+  month: Date
 }
 ```
 
-#### ProtocolAnalytics
+### FailedTransaction
+
+Represents a failed Solana transaction with error details.
 
 ```graphql
-type ProtocolAnalytics {
+type FailedTransaction {
+  signature: Signature!
+  slot: BigInt!
+  blockTime: BigInt!
+  programId: ProgramID!
   protocolName: String!
-  totalTransactions: Int!
-  totalFees: Int!
-  totalComputeUnits: Int!
+  instructionType: String!
+  fee: BigInt!
+  computeUnits: BigInt!
+  accountsCount: Int!
+  date: Date!
+  hour: Int!
+  errorMessage: String
+  logMessages: String
+  rawData: String
+  
+  # Aggregation fields (only present when groupBy is used)
+  protocol: String
+  count: BigInt
+  # ... same aggregation fields as Transaction
+}
+```
+
+### Connection Types
+
+For cursor-based pagination:
+
+```graphql
+type TransactionConnection {
+  edges: [TransactionEdge!]!
+  nodes: [Transaction!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FailedTransactionConnection {
+  edges: [FailedTransactionEdge!]!
+  nodes: [FailedTransaction!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TransactionEdge {
+  node: Transaction!
+  cursor: String!
+}
+
+type FailedTransactionEdge {
+  node: FailedTransaction!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+```
+
+### ProtocolStats
+
+Protocol statistics calculated from filters.
+
+```graphql
+type ProtocolStats {
+  protocolName: String!
+  totalTransactions: BigInt!
+  totalFees: BigInt!
+  totalComputeUnits: BigInt!
   averageFee: Float!
   averageComputeUnits: Float!
   uniquePrograms: Int!
-  dateFrom: String
-  dateTo: String
 }
 ```
 
-#### TimeSeriesPoint
+### TimeSeriesPoint
+
+Time series data point.
 
 ```graphql
 type TimeSeriesPoint {
   timestamp: String!
-  value: Int!
+  value: Float!
   label: String
 }
 ```
 
-#### FeeAnalytics
+### QueryComplexity
+
+Query complexity estimation.
 
 ```graphql
-type FeeAnalytics {
-  minFee: Int!
-  maxFee: Int!
-  avgFee: Float!
-  medianFee: Float!
-  p95Fee: Float!
-  p99Fee: Float!
-  totalFees: Int!
+type QueryComplexity {
+  score: Float!
+  estimatedRows: BigInt!
+  baseCost: Float!
+  recommendations: [String!]!
 }
 ```
 
-#### Stats
+### ExportJob
+
+ML dataset export job status.
 
 ```graphql
-type Stats {
-  totalTransactions: Int!
-  totalFailedTransactions: Int!
-  dateRange: DateRange!
-  protocols: [ProtocolCount!]!
+type ExportJob {
+  id: String!
+  status: ExportJobStatus!
+  progress: Float!
+  rowCount: BigInt
+  fileSize: BigInt
+  downloadUrl: String
+  error: String
+  createdAt: String!
+  completedAt: String
 }
 
-type DateRange {
-  from: String!
-  to: String!
+enum ExportJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+```
+
+## Input Types
+
+### TransactionFilters
+
+Comprehensive filtering options for transactions.
+
+```graphql
+input TransactionFilters {
+  protocols: [String!]
+  programIds: [ProgramID!]
+  signatures: [Signature!]
+  dateRange: DateRange
+  slotRange: SlotRange
+  instructionTypes: [String!]
+  success: Boolean
+  feeRange: FeeRange
+  computeRange: ComputeRange
+  accountsCount: AccountsCountRange
+  errorPattern: String  # Only for failedTransactions
+  logMessage: String    # Only for failedTransactions
 }
 
-type ProtocolCount {
-  name: String!
-  count: Int!
+input DateRange {
+  start: Date!
+  end: Date!
+}
+
+input SlotRange {
+  start: BigInt!
+  end: BigInt!
+}
+
+input FeeRange {
+  min: BigInt
+  max: BigInt
+}
+
+input ComputeRange {
+  min: BigInt
+  max: BigInt
+}
+
+input AccountsCountRange {
+  min: Int
+  max: Int
+}
+```
+
+### Aggregation & Grouping
+
+```graphql
+enum AggregationMetric {
+  COUNT
+  SUM_FEE
+  AVG_FEE
+  MIN_FEE
+  MAX_FEE
+  P50_FEE
+  P95_FEE
+  P99_FEE
+  SUM_COMPUTE_UNITS
+  AVG_COMPUTE_UNITS
+  MIN_COMPUTE_UNITS
+  MAX_COMPUTE_UNITS
+  P50_COMPUTE_UNITS
+  P95_COMPUTE_UNITS
+  P99_COMPUTE_UNITS
+  SUM_ACCOUNTS_COUNT
+  AVG_ACCOUNTS_COUNT
+}
+
+enum GroupByDimension {
+  PROTOCOL
+  HOUR
+  DATE
+  PROGRAM_ID
+  INSTRUCTION_TYPE
+  DAY_OF_WEEK
+  WEEK
+  MONTH
+}
+```
+
+### Sorting & Pagination
+
+```graphql
+enum SortField {
+  DATE
+  SLOT
+  FEE
+  COMPUTE_UNITS
+  ACCOUNTS_COUNT
+  PROTOCOL
+  PROGRAM_ID
+  INSTRUCTION_TYPE
+  COUNT
+  AVG_FEE
+  SUM_FEE
+  P95_FEE
+  P99_FEE
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input SortInput {
+  field: SortField!
+  direction: SortDirection!
+}
+
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+```
+
+### Export Configuration
+
+```graphql
+input ExportConfig {
+  format: ExportFormat!
+  filters: TransactionFilters!
+  columns: [String!]!
+  sampling: SamplingConfig
+  splits: DataSplits
+  preprocessing: PreprocessingConfig
+}
+
+enum ExportFormat {
+  CSV
+  JSONL
+  PARQUET
+}
+
+input SamplingConfig {
+  strategy: SamplingStrategy!
+  rate: Float!
+}
+
+enum SamplingStrategy {
+  RANDOM
+  STRATIFIED
+}
+
+input DataSplits {
+  train: Float!
+  test: Float!
+  val: Float!
+}
+
+input PreprocessingConfig {
+  normalize: Boolean
+  oneHotEncode: [String!]
+}
+```
+
+### Time Bucket
+
+```graphql
+enum TimeBucket {
+  HOUR
+  DAY
+  WEEK
+  MONTH
 }
 ```
 
@@ -102,269 +384,744 @@ type ProtocolCount {
 
 ### transactions
 
-Query transactions with filters.
+Flexible transactions query with filters, aggregations, grouping, sorting, and pagination.
+
+**Signature:**
+```graphql
+transactions(
+  filters: TransactionFilters
+  groupBy: [GroupByDimension!]
+  metrics: [AggregationMetric!]
+  sort: SortInput
+  pagination: PaginationInput
+): TransactionConnection!
+```
 
 **Arguments:**
 
 | Argument | Type | Required | Description |
 |----------|------|----------|-------------|
-| `protocolName` | String | No | Filter by protocol |
-| `programId` | String | No | Filter by program ID |
-| `dateFrom` | String | No | Start date (YYYY-MM-DD) |
-| `dateTo` | String | No | End date (YYYY-MM-DD) |
-| `signature` | String | No | Filter by signature |
-| `limit` | Int | No | Number of results (default: 100) |
-| `offset` | Int | No | Number to skip (default: 0) |
+| `filters` | `TransactionFilters` | No | Filter criteria for transactions |
+| `groupBy` | `[GroupByDimension!]` | No | Dimensions to group by (enables aggregation) |
+| `metrics` | `[AggregationMetric!]` | No | Aggregation metrics to calculate |
+| `sort` | `SortInput` | No | Sort order for results |
+| `pagination` | `PaginationInput` | No | Cursor-based pagination |
+
+**Example: Basic Query**
 
 <CodeGroup>
 ```graphql
 query {
   transactions(
-    protocolName: "jupiter_v6"
-    dateFrom: "2025-07-20"
-    limit: 10
-  ) {
-    signature
-    protocolName
-    fee
-    computeUnits
-    blockTime
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ transactions(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", limit: 10) { signature protocolName fee computeUnits blockTime } }"
-  }'
-```
-</CodeGroup>
-
-### transaction
-
-Get a single transaction by signature.
-
-**Arguments:**
-
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `signature` | String | Yes | Transaction signature |
-
-<CodeGroup>
-```graphql
-query {
-  transaction(signature: "5KJp...") {
-    signature
-    protocolName
-    fee
-    computeUnits
-    blockTime
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ transaction(signature: \"5KJp...\") { signature protocolName fee computeUnits blockTime } }"
-  }'
-```
-</CodeGroup>
-
-### protocolAnalytics
-
-Get analytics for a protocol.
-
-**Arguments:**
-
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `protocolName` | String | Yes | Protocol name |
-| `dateFrom` | String | No | Start date |
-| `dateTo` | String | No | End date |
-
-<CodeGroup>
-```graphql
-query {
-  protocolAnalytics(
-    protocolName: "jupiter_v6"
-    dateFrom: "2025-07-20"
-  ) {
-    protocolName
-    totalTransactions
-    totalFees
-    averageFee
-    uniquePrograms
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ protocolAnalytics(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\") { protocolName totalTransactions totalFees averageFee uniquePrograms } }"
-  }'
-```
-</CodeGroup>
-
-### timeSeries
-
-Get time series data.
-
-**Arguments:**
-
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `protocolName` | String | No | Filter by protocol |
-| `dateFrom` | String | Yes | Start date |
-| `dateTo` | String | Yes | End date |
-| `granularity` | String | No | `hour` or `day` (default: `hour`) |
-
-<CodeGroup>
-```graphql
-query {
-  timeSeries(
-    protocolName: "jupiter_v6"
-    dateFrom: "2025-07-20"
-    dateTo: "2025-07-21"
-    granularity: "hour"
-  ) {
-    timestamp
-    value
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ timeSeries(protocolName: \"jupiter_v6\", dateFrom: \"2025-07-20\", dateTo: \"2025-07-21\", granularity: \"hour\") { timestamp value } }"
-  }'
-```
-</CodeGroup>
-
-### feeAnalytics
-
-Get fee analytics.
-
-**Arguments:**
-
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `protocolName` | String | No | Filter by protocol |
-| `dateFrom` | String | No | Start date |
-| `dateTo` | String | No | End date |
-
-<CodeGroup>
-```graphql
-query {
-  feeAnalytics(protocolName: "jupiter_v6") {
-    minFee
-    maxFee
-    avgFee
-    medianFee
-    p95Fee
-    p99Fee
-    totalFees
-  }
-}
-```
-
-```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ feeAnalytics(protocolName: \"jupiter_v6\") { minFee maxFee avgFee medianFee p95Fee p99Fee totalFees } }"
-  }'
-```
-</CodeGroup>
-
-### stats
-
-Get global statistics.
-
-<CodeGroup>
-```graphql
-query {
-  stats {
-    totalTransactions
-    totalFailedTransactions
-    dateRange {
-      from
-      to
+    filters: {
+      protocols: ["pump_fun", "pump_amm"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
     }
-    protocols {
-      name
-      count
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+        computeUnits
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }
 ```
 
 ```bash curl
-curl -X POST "https://api.solixdb.xyz/graphql" \
+curl -X POST https://api.solixdb.xyz/graphql \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ stats { totalTransactions totalFailedTransactions dateRange { from to } protocols { name count } } }"
+    "query": "query { transactions(filters: { protocols: [\"pump_fun\", \"pump_amm\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }, pagination: { first: 100 }) { edges { node { signature slot protocolName fee computeUnits } cursor } pageInfo { hasNextPage endCursor } } }"
   }'
 ```
-</CodeGroup>
 
-## Example Requests
-
-### Using JavaScript
-
-```javascript
+```javascript JavaScript
 const query = `
   query {
-    transactions(protocolName: "jupiter_v6", limit: 5) {
-      signature
-      protocolName
-      fee
+    transactions(
+      filters: {
+        protocols: ["pump_fun", "pump_amm"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      pagination: { first: 100 }
+    ) {
+      edges {
+        node {
+          signature
+          slot
+          protocolName
+          fee
+          computeUnits
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
     }
   }
 `;
 
 const response = await fetch('https://api.solixdb.xyz/graphql', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({ query })
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query }),
 });
 
 const data = await response.json();
 console.log(data);
 ```
+</CodeGroup>
 
-### Using Python
+**Example: Aggregation with Grouping**
 
-```python
-import requests
-
-query = """
-{
-  transactions(protocolName: "jupiter_v6", limit: 5) {
-    signature
-    protocolName
-    fee
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      feeRange: { min: "100000" }
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS]
+    sort: { field: COUNT, direction: DESC }
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        protocol
+        hour
+        count
+        avgFee
+        p95ComputeUnits
+      }
+    }
+    pageInfo {
+      hasNextPage
+    }
   }
 }
-"""
-
-response = requests.post(
-    'https://api.solixdb.xyz/graphql',
-    json={'query': query}
-)
-
-data = response.json()
-print(data)
 ```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { transactions(filters: { protocols: [\"pump_fun\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, feeRange: { min: \"100000\" } }, groupBy: [PROTOCOL, HOUR], metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS], sort: { field: COUNT, direction: DESC }, pagination: { first: 100 }) { edges { node { protocol hour count avgFee p95ComputeUnits } } pageInfo { hasNextPage } } }"
+  }'
+```
+</CodeGroup>
+
+**Example: Fee Analysis by Day of Week**
+
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [DAY_OF_WEEK]
+    metrics: [COUNT, AVG_FEE, P95_FEE, P99_FEE]
+    sort: { field: AVG_FEE, direction: DESC }
+  ) {
+    edges {
+      node {
+        dayOfWeek
+        count
+        avgFee
+        p95Fee
+        p99Fee
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+<Info>
+  **Filter Ordering:** Filters are automatically applied in optimal order for performance:
+  1. `signature =` (bloom filter, super selective)
+  2. `program_id IN` (bloom filter, very selective)
+  3. `date BETWEEN` (partition pruning)
+  4. `slot BETWEEN` (somewhat selective)
+  5. `protocol_name IN` (bloom filter, less selective)
+  6. Everything else
+</Info>
+
+### failedTransactions
+
+Query failed transactions with error pattern matching.
+
+**Signature:**
+```graphql
+failedTransactions(
+  filters: TransactionFilters!
+  groupBy: [GroupByDimension!]
+  metrics: [AggregationMetric!]
+  sort: SortInput
+  pagination: PaginationInput
+): FailedTransactionConnection!
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `filters` | `TransactionFilters!` | Yes | Filter criteria (must include at least one filter) |
+| `groupBy` | `[GroupByDimension!]` | No | Dimensions to group by |
+| `metrics` | `[AggregationMetric!]` | No | Aggregation metrics |
+| `sort` | `SortInput` | No | Sort order |
+| `pagination` | `PaginationInput` | No | Cursor-based pagination |
+
+**Example: Find Failed Jupiter Swaps**
+
+<CodeGroup>
+```graphql
+query {
+  failedTransactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      errorPattern: "insufficient funds"
+    }
+    groupBy: [PROTOCOL, INSTRUCTION_TYPE]
+    metrics: [COUNT]
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        protocolName
+        instructionType
+        errorMessage
+        count
+      }
+    }
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { failedTransactions(filters: { protocols: [\"jupiter_v6\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, errorPattern: \"insufficient funds\" }, groupBy: [PROTOCOL, INSTRUCTION_TYPE], metrics: [COUNT], pagination: { first: 100 }) { edges { node { protocolName instructionType errorMessage count } } } }"
+  }'
+```
+</CodeGroup>
+
+### timeSeries
+
+Time series query with flexible temporal aggregations.
+
+**Signature:**
+```graphql
+timeSeries(
+  filters: TransactionFilters
+  bucketBy: TimeBucket!
+  metrics: [AggregationMetric!] = [COUNT]
+  groupBy: [GroupByDimension!]
+): [TimeSeriesPoint!]!
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `filters` | `TransactionFilters` | No | Filter criteria |
+| `bucketBy` | `TimeBucket!` | Yes | Time bucket size (HOUR, DAY, WEEK, MONTH) |
+| `metrics` | `[AggregationMetric!]` | No | Aggregation metrics (default: COUNT) |
+| `groupBy` | `[GroupByDimension!]` | No | Additional grouping dimensions |
+
+**Example: Daily Transaction Count**
+
+<CodeGroup>
+```graphql
+query {
+  timeSeries(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    bucketBy: DAY
+    metrics: [COUNT, AVG_FEE]
+  ) {
+    timestamp
+    value
+    label
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { timeSeries(filters: { protocols: [\"pump_fun\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }, bucketBy: DAY, metrics: [COUNT, AVG_FEE]) { timestamp value label } }"
+  }'
+```
+</CodeGroup>
+
+**Example: Hourly Protocol Comparison**
+
+<CodeGroup>
+```graphql
+query {
+  timeSeries(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    bucketBy: HOUR
+    metrics: [COUNT]
+    groupBy: [PROTOCOL]
+  ) {
+    timestamp
+    value
+    label
+  }
+}
+```
+</CodeGroup>
+
+### protocolStats
+
+Get protocol/program statistics with dynamic calculation.
+
+**Signature:**
+```graphql
+protocolStats(
+  filters: TransactionFilters!
+): ProtocolStats!
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `filters` | `TransactionFilters!` | Yes | Filter criteria (must include at least one filter) |
+
+**Example:**
+
+<CodeGroup>
+```graphql
+query {
+  protocolStats(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+  ) {
+    protocolName
+    totalTransactions
+    totalFees
+    totalComputeUnits
+    averageFee
+    averageComputeUnits
+    uniquePrograms
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { protocolStats(filters: { protocols: [\"pump_fun\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }) { protocolName totalTransactions totalFees totalComputeUnits averageFee averageComputeUnits uniquePrograms } }"
+  }'
+```
+</CodeGroup>
+
+### signature
+
+Get a single transaction by signature.
+
+**Signature:**
+```graphql
+signature(signature: Signature!): Transaction
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `signature` | `Signature!` | Yes | Transaction signature |
+
+**Example:**
+
+<CodeGroup>
+```graphql
+query {
+  signature(signature: "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7") {
+    signature
+    slot
+    blockTime
+    protocolName
+    instructionType
+    fee
+    computeUnits
+    accountsCount
+    date
+    hour
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { signature(signature: \"5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7\") { signature slot blockTime protocolName instructionType fee computeUnits accountsCount date hour } }"
+  }'
+```
+</CodeGroup>
+
+### queryComplexity
+
+Calculate query complexity before execution to estimate cost and performance.
+
+**Signature:**
+```graphql
+queryComplexity(
+  filters: TransactionFilters!
+  groupBy: [GroupByDimension!]
+  metrics: [AggregationMetric!]
+): QueryComplexity!
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `filters` | `TransactionFilters!` | Yes | Filter criteria |
+| `groupBy` | `[GroupByDimension!]` | No | Group by dimensions |
+| `metrics` | `[AggregationMetric!]` | No | Aggregation metrics |
+
+**Example:**
+
+<CodeGroup>
+```graphql
+query {
+  queryComplexity(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      protocols: ["pump_fun"]
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE]
+  ) {
+    score
+    estimatedRows
+    baseCost
+    recommendations
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { queryComplexity(filters: { dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, protocols: [\"pump_fun\"] }, groupBy: [PROTOCOL, HOUR], metrics: [COUNT, AVG_FEE]) { score estimatedRows baseCost recommendations } }"
+  }'
+```
+</CodeGroup>
+
+<Warning>
+  **Complexity Limits:**
+  - Queries with complexity >1000 are rejected
+  - Queries with >5M estimated rows require pagination
+  - Use `queryComplexity` to check before executing expensive queries
+</Warning>
+
+### exportJob
+
+Check the status of an ML dataset export job.
+
+**Signature:**
+```graphql
+exportJob(id: String!): ExportJob
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `String!` | Yes | Export job ID |
+
+**Example:**
+
+<CodeGroup>
+```graphql
+query {
+  exportJob(id: "job-12345") {
+    id
+    status
+    progress
+    rowCount
+    fileSize
+    downloadUrl
+    error
+    createdAt
+    completedAt
+  }
+}
+```
+</CodeGroup>
+
+## Mutations
+
+### exportDataset
+
+Export dataset for ML training with background processing.
+
+**Signature:**
+```graphql
+exportDataset(config: ExportConfig!): ExportJob!
+```
+
+**Arguments:**
+
+| Argument | Type | Required | Description |
+|----------|------|----------|-------------|
+| `config` | `ExportConfig!` | Yes | Export configuration |
+
+**Example: Export Training Dataset**
+
+<CodeGroup>
+```graphql
+mutation {
+  exportDataset(
+    config: {
+      format: PARQUET
+      filters: {
+        protocols: ["pump_fun"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      columns: [
+        "protocol_name"
+        "fee"
+        "compute_units"
+        "success"
+        "instruction_type"
+        "hour"
+        "day_of_week"
+        "accounts_count"
+      ]
+      sampling: { strategy: RANDOM, rate: 0.1 }
+      splits: { train: 0.7, test: 0.2, val: 0.1 }
+    }
+  ) {
+    id
+    status
+    progress
+  }
+}
+```
+
+```bash curl
+curl -X POST https://api.solixdb.xyz/graphql \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "mutation { exportDataset(config: { format: PARQUET, filters: { protocols: [\"pump_fun\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }, columns: [\"protocol_name\", \"fee\", \"compute_units\", \"success\", \"instruction_type\", \"hour\", \"day_of_week\", \"accounts_count\"], sampling: { strategy: RANDOM, rate: 0.1 }, splits: { train: 0.7, test: 0.2, val: 0.1 } }) { id status progress } }"
+  }'
+```
+</CodeGroup>
+
+<Info>
+  **Export Processing:**
+  - Exports are processed in the background with BullMQ
+  - Files are processed in 50k row chunks
+  - Files expire after 24 hours
+  - Check status with `exportJob` query
+  - Download via signed URL when complete
+</Info>
+
+## Pagination
+
+The API uses cursor-based pagination for efficient large result sets. Cursors are composite `(slot, signature)` values encoded as base64 strings.
+
+**Pagination Rules:**
+- Queries returning >10k rows: **FORCE cursor pagination**
+- Max 1000 rows per page
+- Aggregations capped at 10k groups
+- Use `pageInfo.hasNextPage` to check for more results
+- Use `pageInfo.endCursor` for next page
+
+**Example: Paginated Query**
+
+<CodeGroup>
+```graphql
+query GetTransactions($first: Int, $after: String) {
+  transactions(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    pagination: { first: $first, after: $after }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+```
+
+```javascript JavaScript
+async function fetchAllTransactions() {
+  let allTransactions = [];
+  let hasNextPage = true;
+  let cursor = null;
+  
+  while (hasNextPage) {
+    const query = `
+      query GetTransactions($first: Int, $after: String) {
+        transactions(
+          filters: {
+            protocols: ["pump_fun"]
+            dateRange: { start: "2025-01-01", end: "2025-01-31" }
+          }
+          pagination: { first: 1000, after: $after }
+        ) {
+          edges {
+            node {
+              signature
+              slot
+              protocolName
+              fee
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+    
+    const response = await fetch('https://api.solixdb.xyz/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        variables: { first: 1000, after: cursor }
+      }),
+    });
+    
+    const data = await response.json();
+    const connection = data.data.transactions;
+    
+    allTransactions.push(...connection.edges.map(e => e.node));
+    hasNextPage = connection.pageInfo.hasNextPage;
+    cursor = connection.pageInfo.endCursor;
+  }
+  
+  return allTransactions;
+}
+```
+</CodeGroup>
+
+## Query Complexity
+
+Query complexity is calculated based on:
+- **Base cost** = `estimated_rows / 10000`
+- **GROUP BY multiplier** = `2^dimensions`
+- **Aggregation cost** = `+10% per aggregation`
+- **Final score** = `base_cost * group_by_multiplier * (1 + aggregation_cost)`
+
+**Complexity Tiers:**
+
+| Complexity | Rate Limit (per minute) |
+|------------|-------------------------|
+| < 50       | 200                     |
+| < 100      | 100                     |
+| < 200      | 50                      |
+| < 500      | 20                      |
+| < 1000     | 10                      |
+| ≥ 1000     | Rejected                |
+
+<Warning>
+  Always check complexity before executing expensive queries using the `queryComplexity` query.
+</Warning>
+
+## Caching
+
+The API implements adaptive caching with real-time blockchain data invalidation:
+
+- **Hot queries** (>5 hits): 1 hour cache
+- **Recent data** (<24h): 5 min cache
+- **Historical data**: 24 hour cache
+- **Aggregations**: 30 min cache
+- **Real-time invalidation**: Checks for new blockchain data every 60s
+
+Cache hit rate is typically >70% for historical queries.
+
+## Performance
+
+**Expected Response Times:**
+- Simple queries: <100ms p95
+- Complex queries: <1s p95
+- Aggregations: <2s p95
+
+**Concurrency:**
+- Handles 1000+ concurrent requests
+- Connection pool auto-scales from 20-200 connections
+
+## Error Handling
+
+GraphQL errors follow the standard GraphQL error format:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Query complexity exceeds limit",
+      "extensions": {
+        "code": "COMPLEXITY_EXCEEDED",
+        "complexity": 1200,
+        "limit": 1000
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+Common error codes:
+- `COMPLEXITY_EXCEEDED` - Query complexity >1000
+- `PAGINATION_REQUIRED` - Query returns >10k rows without pagination
+- `INVALID_FILTER` - Invalid filter value
+- `RATE_LIMIT_EXCEEDED` - Rate limit exceeded
+- `VALIDATION_ERROR` - Input validation failed
+
+For more details, see our [Error Handling](/error-handling) guide.
 
 ## GraphQL Playground
 
@@ -400,4 +1157,3 @@ You can use any GraphQL client or IDE to explore the API:
     Popular API testing tool
   </Card>
 </CardGroup>
-

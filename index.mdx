@@ -1,11 +1,11 @@
 ---
 title: "Introduction"
-description: "Welcome to SolixDB API documentation - Access Solana DeFi data via REST, GraphQL, or SQL"
+description: "Welcome to SolixDB API documentation - Production-ready GraphQL API for Solana DeFi data"
 ---
 
 ## Welcome to SolixDB
 
-SolixDB provides fast and flexible access to **Solana DeFi transaction data** from major DEX protocols. Whether you're building trading bots, analytics dashboards, ML models, or conducting research, our API gives you the power to query DEX data with ease.
+SolixDB provides fast and flexible access to **929M+ Solana transaction instruction records** from major DEX protocols. Whether you're building trading bots, analytics dashboards, ML models, or conducting research, our GraphQL API gives you the power to query DEX data with composable query primitives.
 
 <CardGroup cols={2}>
   <Card
@@ -13,21 +13,14 @@ SolixDB provides fast and flexible access to **Solana DeFi transaction data** fr
     icon="rocket"
     href="/getting-started"
   >
-    Follow our quickstart guide to make your first API request in minutes.
-  </Card>
-  <Card
-    title="REST API"
-    icon="code"
-    href="/api-reference/rest-api"
-  >
-    Explore our RESTful endpoints for standardized queries.
+    Follow our quickstart guide to make your first GraphQL query in minutes.
   </Card>
   <Card
     title="GraphQL API"
     icon="network-wired"
     href="/api-reference/graphql-api"
   >
-    Query exactly the data you need with our flexible GraphQL API.
+    Explore our flexible GraphQL API with queries, mutations, and types.
   </Card>
   <Card
     title="Examples"
@@ -36,28 +29,38 @@ SolixDB provides fast and flexible access to **Solana DeFi transaction data** fr
   >
     See practical examples for common use cases.
   </Card>
+  <Card
+    title="Migration Guide"
+    icon="arrow-right"
+    href="/api-reference/migration-guide"
+  >
+    Migrate from REST API to GraphQL.
+  </Card>
 </CardGroup>
 
 ## Why SolixDB?
 
 <AccordionGroup>
-  <Accordion title="DEX Data Coverage" icon="database">
-    Comprehensive Solana DEX data from Jupiter, Pump.fun, Raydium, Orca, and more. We're continuously expanding to cover additional protocols.
+  <Accordion title="Flexible GraphQL API" icon="code">
+    Composable query primitives, not predefined use cases. Query exactly the data you need with filters, aggregations, grouping, and sorting.
   </Accordion>
-  <Accordion title="Multiple API Interfaces" icon="code">
-    Choose REST, GraphQL, or SQL—use the interface that fits your workflow. All three access the same powerful data.
+  <Accordion title="Query Complexity Scoring" icon="calculator">
+    Real ClickHouse row estimates for accurate cost calculation. Check complexity before execution to avoid rejected queries.
   </Accordion>
-  <Accordion title="Lightning Fast" icon="bolt">
-    Optimized queries with sub-500ms response times, powered by ClickHouse's columnar storage engine and intelligent caching.
+  <Accordion title="Smart Caching" icon="layer-group">
+    Adaptive caching with real-time blockchain data invalidation. >70% cache hit rate for historical queries.
   </Accordion>
-  <Accordion title="Production Ready" icon="shield">
-    Reliable infrastructure with real-time data updates, high availability, and built-in rate limiting.
+  <Accordion title="ML Dataset Export" icon="brain">
+    Background job processing for Parquet, CSV, JSONL exports with sampling and train/test/val splits.
   </Accordion>
-  <Accordion title="Perfect for ML & Research" icon="brain">
-    Clean, structured data ready for model training, backtesting, and academic research on DeFi markets.
+  <Accordion title="Connection Pooling" icon="network-wired">
+    Scales to 200 connections for 1000+ concurrent requests with auto-scaling connection pool.
   </Accordion>
-  <Accordion title="Developer First" icon="user-gear">
-    Simple authentication, comprehensive documentation, and examples to get you building quickly.
+  <Accordion title="Toggle-able Rate Limiting" icon="clock">
+    Logarithmic tiers with sliding window tracking based on query complexity.
+  </Accordion>
+  <Accordion title="Observability" icon="chart-line">
+    Prometheus metrics, structured logging, and query analysis for monitoring and optimization.
   </Accordion>
 </AccordionGroup>
 
@@ -69,24 +72,29 @@ All API requests should be made to:
 https://api.solixdb.xyz
 ```
 
-## Quick Start
-
-Make your first request in seconds:
-
-<CodeGroup>
-```bash REST API
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
+**GraphQL Endpoint:**
+```
+POST /graphql
 ```
 
+## Quick Start
+
+Make your first GraphQL query in seconds:
+
+<CodeGroup>
 ```bash GraphQL
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ transactions(protocolName: \"jupiter_v6\", limit: 10) { signature protocolName fee } }"
+    "query": "{ transactions(filters: { protocols: [\"jupiter_v6\"] }, pagination: { first: 10 }) { edges { node { signature protocolName fee } } } }"
   }'
 ```
 
-```bash SQL Query
+```bash REST API (Legacy)
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
+```
+
+```bash SQL Query (Legacy)
 curl -X POST "https://api.solixdb.xyz/api/v1/query" \
   -H "Content-Type: application/json" \
   -d '{
@@ -95,26 +103,118 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```
 </CodeGroup>
 
+<Info>
+  **New to GraphQL?** We recommend using the GraphQL API for new projects. It provides better flexibility, performance, and advanced features. See our [Migration Guide](/api-reference/migration-guide) if you're currently using the REST API.
+</Info>
+
 ## Use Cases
 
 SolixDB powers a wide range of applications:
 
-- **Trading Bots**: Backtest strategies against historical DEX trades
-- **Analytics Dashboards**: Monitor protocol performance and trends
-- **ML Models**: Train models for price prediction, rug pull detection, and more
-- **Research**: Export datasets for academic papers on DeFi and market microstructure
-- **Whale Tracking**: Monitor large holders and their trading patterns
+- **Trading Bots**: Backtest strategies against historical DEX trades with flexible queries
+- **Analytics Dashboards**: Monitor protocol performance and trends with real-time aggregations
+- **ML Models**: Export training datasets with background job processing and sampling
+- **Research**: Query 929M+ transaction records for academic papers on DeFi
+- **Failed Transaction Analysis**: Analyze error patterns with dedicated failed transaction queries
 - **Protocol Comparison**: Compare performance across Jupiter, Raydium, Orca, and more
+
+## Key Features
+
+### Flexible Queries
+
+Query exactly the fields you need with GraphQL:
+
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS]
+  ) {
+    edges {
+      node {
+        protocol
+        hour
+        count
+        avgFee
+        p95ComputeUnits
+      }
+    }
+  }
+}
+```
+
+### Query Complexity
+
+Check complexity before execution:
+
+```graphql
+query {
+  queryComplexity(
+    filters: { dateRange: { start: "2025-01-01", end: "2025-01-31" } }
+    groupBy: [PROTOCOL, HOUR]
+  ) {
+    score
+    estimatedRows
+    recommendations
+  }
+}
+```
+
+### ML Dataset Export
+
+Export datasets for training with background processing:
+
+```graphql
+mutation {
+  exportDataset(
+    config: {
+      format: PARQUET
+      filters: { protocols: ["pump_fun"] }
+      columns: ["protocol_name", "fee", "compute_units"]
+      sampling: { strategy: RANDOM, rate: 0.1 }
+    }
+  ) {
+    id
+    status
+    progress
+  }
+}
+```
 
 ## Next Steps
 
 <CardGroup cols={3}>
   <Card
+    title="Getting Started"
+    icon="rocket"
+    href="/getting-started"
+  >
+    Make your first GraphQL query.
+  </Card>
+  <Card
+    title="GraphQL API Reference"
+    icon="code"
+    href="/api-reference/graphql-api"
+  >
+    Complete API reference with all queries and types.
+  </Card>
+  <Card
+    title="Examples"
+    icon="book"
+    href="/examples"
+  >
+    Real-world examples and use cases.
+  </Card>
+  <Card
     title="Authentication"
     icon="key"
     href="/authentication"
   >
-    Learn about API access and IP-based rate limiting.
+    Learn about API access and rate limiting.
   </Card>
   <Card
     title="Error Handling"
@@ -128,7 +228,7 @@ SolixDB powers a wide range of applications:
     icon="clock"
     href="/rate-limiting"
   >
-    Learn about rate limits and best practices.
+    Learn about complexity-based rate limits.
   </Card>
 </CardGroup>
 

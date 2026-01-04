@@ -1,0 +1,607 @@
+---
+title: "Migration Guide: REST to GraphQL"
+description: "Step-by-step guide to migrate from REST API to GraphQL API"
+---
+
+This guide helps you migrate from the REST API to the new GraphQL API. The GraphQL API provides better flexibility, performance, and advanced features.
+
+## Why Migrate?
+
+<CardGroup cols={2}>
+  <Card title="Flexible Queries" icon="code">
+    Query exactly the fields you need, reducing payload size and improving performance.
+  </Card>
+  <Card title="Advanced Aggregations" icon="chart-bar">
+    Built-in aggregations, grouping, and statistical functions (P50, P95, P99).
+  </Card>
+  <Card title="Better Performance" icon="bolt">
+    Optimized query execution with automatic filter ordering and caching.
+  </Card>
+  <Card title="ML Dataset Export" icon="brain">
+    Background job processing for Parquet, CSV, JSONL exports with sampling and splits.
+  </Card>
+  <Card title="Query Complexity" icon="calculator">
+    Pre-execution complexity estimation to avoid expensive queries.
+  </Card>
+  <Card title="Cursor Pagination" icon="arrow-right">
+    Efficient cursor-based pagination for large result sets.
+  </Card>
+</CardGroup>
+
+## Quick Reference: Endpoint Mapping
+
+| REST Endpoint | GraphQL Query | Notes |
+|---------------|---------------|-------|
+| `GET /transactions` | `transactions` | More flexible filtering and pagination |
+| `GET /transactions/:signature` | `signature` | Same functionality |
+| `GET /analytics/protocols` | `protocolStats` | More comprehensive stats |
+| `GET /analytics/time-series` | `timeSeries` | Flexible time buckets and metrics |
+| `GET /analytics/fees` | `transactions` with aggregations | More flexible aggregation options |
+| `GET /stats` | `protocolStats` | Use with appropriate filters |
+| `POST /query` | Still available | Legacy SQL endpoint maintained |
+
+## Migration Examples
+
+### 1. Get Transactions
+
+**REST API:**
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&date_from=2025-01-01&date_to=2025-01-31&limit=100"
+```
+
+**GraphQL Equivalent:**
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+        computeUnits
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+**Key Differences:**
+- Filters are grouped in a `filters` object
+- `protocol_name` → `protocols` (array)
+- `date_from`/`date_to` → `dateRange` object
+- `limit` → `pagination.first`
+- Response uses cursor-based pagination with `edges` and `pageInfo`
+
+### 2. Get Transaction by Signature
+
+**REST API:**
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/transactions/5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"
+```
+
+**GraphQL Equivalent:**
+```graphql
+query {
+  signature(signature: "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7") {
+    signature
+    slot
+    blockTime
+    protocolName
+    instructionType
+    fee
+    computeUnits
+    accountsCount
+    date
+    hour
+  }
+}
+```
+
+**Key Differences:**
+- Direct query instead of path parameter
+- Select only the fields you need
+
+### 3. Get Protocol Analytics
+
+**REST API:**
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-01-01"
+```
+
+**GraphQL Equivalent:**
+```graphql
+query {
+  protocolStats(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+  ) {
+    protocolName
+    totalTransactions
+    totalFees
+    totalComputeUnits
+    averageFee
+    averageComputeUnits
+    uniquePrograms
+  }
+}
+```
+
+**Key Differences:**
+- Query name: `protocolStats` instead of endpoint path
+- Filters use the same `TransactionFilters` input type
+- More comprehensive statistics available
+
+### 4. Get Time Series Data
+
+**REST API:**
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/time-series?protocol_name=jupiter_v6&date_from=2025-01-01&date_to=2025-01-31&granularity=hour"
+```
+
+**GraphQL Equivalent:**
+```graphql
+query {
+  timeSeries(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    bucketBy: HOUR
+    metrics: [COUNT]
+  ) {
+    timestamp
+    value
+    label
+  }
+}
+```
+
+**Key Differences:**
+- `granularity` → `bucketBy` (enum: HOUR, DAY, WEEK, MONTH)
+- Can specify multiple `metrics` (COUNT, AVG_FEE, etc.)
+- Can add `groupBy` for multi-dimensional analysis
+
+### 5. Get Fee Analytics
+
+**REST API:**
+```bash
+curl -X GET "https://api.solixdb.xyz/api/v1/analytics/fees?protocol_name=jupiter_v6&date_from=2025-01-01&date_to=2025-01-31"
+```
+
+**GraphQL Equivalent:**
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    metrics: [MIN_FEE, MAX_FEE, AVG_FEE, P50_FEE, P95_FEE, P99_FEE, SUM_FEE]
+  ) {
+    edges {
+      node {
+        minFee
+        maxFee
+        avgFee
+        p50Fee
+        p95Fee
+        p99Fee
+        sumFee
+      }
+    }
+  }
+}
+```
+
+**Key Differences:**
+- Uses `transactions` query with aggregation `metrics`
+- More flexible: can group by dimensions, add filters, etc.
+- Percentiles (P50, P95, P99) available
+
+## Advanced Features (GraphQL Only)
+
+### Aggregations with Grouping
+
+**GraphQL:**
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["pump_fun", "pump_amm"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS]
+    sort: { field: COUNT, direction: DESC }
+  ) {
+    edges {
+      node {
+        protocol
+        hour
+        count
+        avgFee
+        p95ComputeUnits
+      }
+    }
+  }
+}
+```
+
+**Not available in REST API** - This requires multiple REST calls and client-side aggregation.
+
+### Failed Transactions Analysis
+
+**GraphQL:**
+```graphql
+query {
+  failedTransactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      errorPattern: "insufficient funds"
+    }
+    groupBy: [PROTOCOL, INSTRUCTION_TYPE]
+    metrics: [COUNT]
+  ) {
+    edges {
+      node {
+        protocolName
+        instructionType
+        errorMessage
+        count
+      }
+    }
+  }
+}
+```
+
+**Not available in REST API** - New feature for analyzing failed transactions.
+
+### Query Complexity Estimation
+
+**GraphQL:**
+```graphql
+query {
+  queryComplexity(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      protocols: ["pump_fun"]
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE]
+  ) {
+    score
+    estimatedRows
+    baseCost
+    recommendations
+  }
+}
+```
+
+**Not available in REST API** - Check query cost before execution.
+
+### ML Dataset Export
+
+**GraphQL:**
+```graphql
+mutation {
+  exportDataset(
+    config: {
+      format: PARQUET
+      filters: {
+        protocols: ["pump_fun"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      columns: [
+        "protocol_name"
+        "fee"
+        "compute_units"
+        "success"
+        "instruction_type"
+        "hour"
+        "day_of_week"
+        "accounts_count"
+      ]
+      sampling: { strategy: RANDOM, rate: 0.1 }
+      splits: { train: 0.7, test: 0.2, val: 0.1 }
+    }
+  ) {
+    id
+    status
+    progress
+  }
+}
+```
+
+**Not available in REST API** - Background job processing for ML training datasets.
+
+## Code Migration Examples
+
+### JavaScript/TypeScript
+
+**Before (REST):**
+```javascript
+async function getTransactions(protocol, dateFrom, dateTo) {
+  const params = new URLSearchParams({
+    protocol_name: protocol,
+    date_from: dateFrom,
+    date_to: dateTo,
+    limit: 100
+  });
+  
+  const response = await fetch(
+    `https://api.solixdb.xyz/api/v1/transactions?${params}`
+  );
+  
+  return await response.json();
+}
+```
+
+**After (GraphQL):**
+```javascript
+async function getTransactions(protocol, dateFrom, dateTo) {
+  const query = `
+    query {
+      transactions(
+        filters: {
+          protocols: ["${protocol}"]
+          dateRange: { start: "${dateFrom}", end: "${dateTo}" }
+        }
+        pagination: { first: 100 }
+      ) {
+        edges {
+          node {
+            signature
+            slot
+            protocolName
+            fee
+            computeUnits
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  `;
+  
+  const response = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  
+  const data = await response.json();
+  return data.data.transactions;
+}
+```
+
+### Python
+
+**Before (REST):**
+```python
+import requests
+
+def get_transactions(protocol, date_from, date_to):
+    params = {
+        'protocol_name': protocol,
+        'date_from': date_from,
+        'date_to': date_to,
+        'limit': 100
+    }
+    
+    response = requests.get(
+        'https://api.solixdb.xyz/api/v1/transactions',
+        params=params
+    )
+    
+    return response.json()
+```
+
+**After (GraphQL):**
+```python
+import requests
+
+def get_transactions(protocol, date_from, date_to):
+    query = """
+    query {
+      transactions(
+        filters: {
+          protocols: ["%s"]
+          dateRange: { start: "%s", end: "%s" }
+        }
+        pagination: { first: 100 }
+      ) {
+        edges {
+          node {
+            signature
+            slot
+            protocolName
+            fee
+            computeUnits
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+    """ % (protocol, date_from, date_to)
+    
+    response = requests.post(
+        'https://api.solixdb.xyz/graphql',
+        json={'query': query}
+    )
+    
+    data = response.json()
+    return data['data']['transactions']
+```
+
+## Pagination Migration
+
+**REST API (Offset-based):**
+```javascript
+let offset = 0;
+const limit = 100;
+
+while (true) {
+  const response = await fetch(
+    `https://api.solixdb.xyz/api/v1/transactions?limit=${limit}&offset=${offset}`
+  );
+  const data = await response.json();
+  
+  if (data.data.length === 0) break;
+  
+  // Process data...
+  offset += limit;
+}
+```
+
+**GraphQL (Cursor-based):**
+```javascript
+let hasNextPage = true;
+let cursor = null;
+
+while (hasNextPage) {
+  const query = `
+    query GetTransactions($first: Int, $after: String) {
+      transactions(pagination: { first: $first, after: $after }) {
+        edges {
+          node {
+            signature
+            slot
+            protocolName
+          }
+          cursor
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  `;
+  
+  const response = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query,
+      variables: { first: 100, after: cursor }
+    }),
+  });
+  
+  const data = await response.json();
+  const connection = data.data.transactions;
+  
+  // Process connection.edges...
+  
+  hasNextPage = connection.pageInfo.hasNextPage;
+  cursor = connection.pageInfo.endCursor;
+}
+```
+
+## Common Migration Patterns
+
+### Multiple Protocol Queries
+
+**REST (Multiple Requests):**
+```javascript
+const protocols = ['jupiter_v6', 'raydium_amm_v3'];
+const results = {};
+
+for (const protocol of protocols) {
+  const response = await fetch(
+    `https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=${protocol}`
+  );
+  results[protocol] = await response.json();
+}
+```
+
+**GraphQL (Single Request):**
+```graphql
+query {
+  jupiter: protocolStats(filters: { protocols: ["jupiter_v6"] }) {
+    protocolName
+    totalTransactions
+    averageFee
+  }
+  raydium: protocolStats(filters: { protocols: ["raydium_amm_v3"] }) {
+    protocolName
+    totalTransactions
+    averageFee
+  }
+}
+```
+
+### Aggregations
+
+**REST (Client-side):**
+```javascript
+const response = await fetch(
+  'https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10000'
+);
+const transactions = await response.json().data;
+
+// Calculate aggregations client-side
+const avgFee = transactions.reduce((sum, t) => sum + t.fee, 0) / transactions.length;
+const p95Fee = calculatePercentile(transactions.map(t => t.fee), 95);
+```
+
+**GraphQL (Server-side):**
+```graphql
+query {
+  transactions(
+    filters: { protocols: ["jupiter_v6"] }
+    metrics: [AVG_FEE, P95_FEE]
+  ) {
+    edges {
+      node {
+        avgFee
+        p95Fee
+      }
+    }
+  }
+}
+```
+
+## Migration Checklist
+
+- [ ] Identify all REST API endpoints used in your codebase
+- [ ] Map each endpoint to its GraphQL equivalent
+- [ ] Update API client code to use GraphQL
+- [ ] Test query complexity before executing expensive queries
+- [ ] Implement cursor-based pagination for large result sets
+- [ ] Update error handling for GraphQL error format
+- [ ] Monitor rate limits (complexity-based in GraphQL)
+- [ ] Take advantage of new features (aggregations, failed transactions, export)
+
+## Need Help?
+
+- Check the [GraphQL API Reference](/api-reference/graphql-api) for complete documentation
+- See [Examples](/examples) for common use cases
+- Review [Error Handling](/error-handling) for GraphQL error format
+- Check [Rate Limiting](/rate-limiting) for complexity-based limits
+
+<Tip>
+  The REST API will continue to be maintained for backward compatibility. You can migrate gradually, endpoint by endpoint.
+</Tip>
+

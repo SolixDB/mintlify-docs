@@ -1,9 +1,15 @@
 ---
-title: "REST API Reference"
-description: "Complete reference for all REST API endpoints"
+title: "REST API Reference (Legacy)"
+description: "Legacy REST API endpoints - Consider migrating to GraphQL for better flexibility"
 ---
 
-The REST API provides standardized endpoints for querying Solana transaction data.
+<Warning>
+  **Legacy API:** The REST API is maintained for backward compatibility. For new projects, we strongly recommend using the [GraphQL API](/api-reference/graphql-api) which provides more flexibility, better performance, and advanced features like aggregations, grouping, and ML dataset export.
+  
+  See our [Migration Guide](/api-reference/migration-guide) for help migrating from REST to GraphQL.
+</Warning>
+
+The REST API provides standardized endpoints for querying Solana transaction data. While still functional, the GraphQL API offers superior flexibility and performance.
 
 ## Base URL
 
@@ -31,6 +37,10 @@ Retrieve a list of transactions with optional filters.
 | `limit` | integer | No | Number of results (1-1000, default: 100) |
 | `offset` | integer | No | Number of results to skip (default: 0) |
 
+<Info>
+  **GraphQL Equivalent:** Use the `transactions` query with `TransactionFilters` and `PaginationInput`. See [GraphQL API Reference](/api-reference/graphql-api#transactions).
+</Info>
+
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&date_from=2025-07-20&limit=100" \
@@ -39,7 +49,7 @@ curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v
 ```json Response
 {
   "data": [
-  ;
+    {
       "signature": "5KJp...",
       "slot": 123456789,
       "blockTime": 1721491200,
@@ -71,6 +81,10 @@ Retrieve a specific transaction by its signature.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `signature` | string | Yes | Transaction signature |
+
+<Info>
+  **GraphQL Equivalent:** Use the `signature` query. See [GraphQL API Reference](/api-reference/graphql-api#signature).
+</Info>
 
 <CodeGroup>
 ```bash
@@ -110,6 +124,10 @@ Get aggregated analytics for a specific protocol.
 | `date_from` | string | No | Start date (YYYY-MM-DD) |
 | `date_to` | string | No | End date (YYYY-MM-DD) |
 
+<Info>
+  **GraphQL Equivalent:** Use the `protocolStats` query. See [GraphQL API Reference](/api-reference/graphql-api#protocolstats).
+</Info>
+
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20" \
@@ -147,6 +165,10 @@ Get time series data for transactions.
 | `date_to` | string | Yes | End date (YYYY-MM-DD) |
 | `granularity` | string | No | Time granularity: `hour` or `day` (default: `hour`) |
 
+<Info>
+  **GraphQL Equivalent:** Use the `timeSeries` query with `TimeBucket`. See [GraphQL API Reference](/api-reference/graphql-api#timeseries).
+</Info>
+
 <CodeGroup>
 ```bash
 curl -X GET "https://api.solixdb.xyz/api/v1/analytics/time-series?protocol_name=jupiter_v6&date_from=2025-07-20&date_to=2025-07-21&granularity=hour" \
@@ -155,11 +177,11 @@ curl -X GET "https://api.solixdb.xyz/api/v1/analytics/time-series?protocol_name=
 ```json Response
 {
   "data": [
-  ;
+    {
       "timestamp": "2025-07-20T00:00:00Z",
       "value": 50000
     },
-  ;
+    {
       "timestamp": "2025-07-20T01:00:00Z",
       "value": 52000
     }
@@ -181,6 +203,10 @@ Get fee statistics and analytics.
 | `protocol_name` | string | No | Filter by protocol |
 | `date_from` | string | No | Start date (YYYY-MM-DD) |
 | `date_to` | string | No | End date (YYYY-MM-DD) |
+
+<Info>
+  **GraphQL Equivalent:** Use the `transactions` query with `groupBy` and aggregation `metrics` like `AVG_FEE`, `P95_FEE`, `P99_FEE`. See [GraphQL API Reference](/api-reference/graphql-api#transactions).
+</Info>
 
 <CodeGroup>
 ```bash
@@ -223,11 +249,11 @@ curl -X GET "https://api.solixdb.xyz/api/v1/stats" \
       "to": "2025-08-02"
     },
     "protocols": [
-    ;
+      {
         "name": "jupiter_v6",
         "count": 150000000
       },
-    ;
+      {
         "name": "jupiter_v4",
         "count": 100000000
       }
@@ -237,11 +263,15 @@ curl -X GET "https://api.solixdb.xyz/api/v1/stats" \
 ```
 </CodeGroup>
 
-### Execute SQL Query
+### Execute SQL Query (Legacy)
 
 Execute read-only SQL queries directly against the ClickHouse database. This endpoint allows you to write custom SELECT queries for maximum flexibility.
 
 **Endpoint:** `POST /query`
+
+<Info>
+  This endpoint is still available and maintained. For most use cases, the GraphQL API provides better type safety and performance. Use SQL queries only when you need custom logic not available in GraphQL.
+</Info>
 
 **Request Body:**
 
@@ -284,7 +314,7 @@ curl -X POST "https://api.solixdb.xyz/api/v1/query" \
 ```json
 {
   "data": [
-  ;
+    {
       "signature": "5KJp...",
       "protocol_name": "jupiter_v6",
       "fee": 5000,
@@ -334,7 +364,38 @@ All successful responses follow this format:
 }
 ```
 
+## Health & Monitoring Endpoints
+
+### Health Check
+
+**Endpoint:** `GET /health`
+
+Check API health status.
+
+```bash
+curl -X GET "https://api.solixdb.xyz/health"
+```
+
+### Prometheus Metrics
+
+**Endpoint:** `GET /metrics`
+
+Get Prometheus metrics for monitoring.
+
+```bash
+curl -X GET "https://api.solixdb.xyz/metrics"
+```
+
+### Query Pattern Analysis
+
+**Endpoint:** `GET /admin/suggest-materialized-views`
+
+Analyze query patterns for optimization suggestions (admin only).
+
 <Tip>
   For detailed error handling information, see our [Error Handling](/error-handling) guide.
 </Tip>
 
+<Tip>
+  **Migrating to GraphQL?** See our [Migration Guide](/api-reference/migration-guide) for step-by-step instructions on converting REST API calls to GraphQL queries.
+</Tip>

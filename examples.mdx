@@ -1,9 +1,9 @@
 ---
 title: "Examples"
-description: "Practical examples for common use cases with SolixDB API"
+description: "Practical examples for common use cases with SolixDB GraphQL API"
 ---
 
-This page contains practical examples for common use cases with the SolixDB API. Use these examples to build trading bots, analytics dashboards, ML models, and more.
+This page contains practical examples for common use cases with the SolixDB GraphQL API. Use these examples to build trading bots, analytics dashboards, ML models, and more.
 
 ## Common Use Cases
 
@@ -27,40 +27,85 @@ This page contains practical examples for common use cases with the SolixDB API.
     Export clean datasets for training price prediction and rug pull detection models.
   </Card>
   <Card
-    title="Whale Tracking"
-    icon="users"
+    title="Failed Transaction Analysis"
+    icon="triangle-exclamation"
   >
-    Monitor large holders and their trading patterns across protocols.
+    Analyze failed transactions to identify patterns and errors.
   </Card>
 </CardGroup>
 
-## REST API Examples
+## Basic Queries
 
-### Get Recent Jupiter V6 Transactions
+### Get Recent Transactions
 
-Query recent transactions from Jupiter V6:
+Query recent transactions from a specific protocol:
 
 <CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
+```graphql
+query {
+  transactions(
+    filters: { protocols: ["jupiter_v6"] }
+    pagination: { first: 10 }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+        computeUnits
+        blockTime
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "{ transactions(filters: { protocols: [\"jupiter_v6\"] }, pagination: { first: 10 }) { edges { node { signature slot protocolName fee computeUnits blockTime } cursor } pageInfo { hasNextPage } } }"
+  }'
 ```
 
 ```javascript JavaScript
-const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10'
-);
+const query = `
+  query {
+    transactions(
+      filters: { protocols: ["jupiter_v6"] }
+      pagination: { first: 10 }
+    ) {
+      edges {
+        node {
+          signature
+          slot
+          protocolName
+          fee
+          computeUnits
+          blockTime
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+      }
+    }
+  }
+`;
+
+const response = await fetch('https://api.solixdb.xyz/graphql', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ query }),
+});
+
 const data = await response.json();
 console.log(data);
-```
-
-```python Python
-import requests
-
-response = requests.get(
-    'https://api.solixdb.xyz/api/v1/transactions',
-    params={'protocol_name': 'jupiter_v6', 'limit': 10}
-)
-print(response.json())
 ```
 </CodeGroup>
 
@@ -69,141 +114,161 @@ print(response.json())
 Filter transactions by date range for backtesting or analysis:
 
 <CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100"
-```
-
-```javascript JavaScript
-const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/transactions?date_from=2025-07-20&date_to=2025-07-21&limit=100'
-);
-const data = await response.json();
-console.log(data);
-```
-
-```python Python
-import requests
-
-response = requests.get(
-    'https://api.solixdb.xyz/api/v1/transactions',
-    params={
-        'date_from': '2025-07-20',
-        'date_to': '2025-07-21',
-        'limit': 100
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
     }
-)
-print(response.json())
-```
-</CodeGroup>
-
-### Get Protocol Analytics
-
-Analyze protocol performance metrics:
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20"
-```
-
-```javascript JavaScript
-const response = await fetch(
-  'https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20'
-);
-const data = await response.json();
-console.log(data);
-```
-
-```python Python
-import requests
-
-response = requests.get(
-    'https://api.solixdb.xyz/api/v1/analytics/protocols',
-    params={
-        'protocol_name': 'jupiter_v6',
-        'date_from': '2025-07-20'
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+        computeUnits
+        date
+        hour
+      }
     }
-)
-print(response.json())
-```
-</CodeGroup>
-
-### Compare Multiple Protocols
-
-Compare performance across different DEX protocols:
-
-<CodeGroup>
-```bash
-# Get Jupiter V6 data
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20"
-
-# Get Raydium data
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=raydium_amm_v3&date_from=2025-07-20"
-```
-
-```javascript JavaScript
-async function compareProtocols() {
-  const protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun'];
-  const results = {};
-  
-  for (const protocol of protocols) {
-    const response = await fetch(
-      `https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=${protocol}&date_from=2025-07-20`
-    );
-    results[protocol] = await response.json();
   }
-  
-  console.log(results);
 }
-
-compareProtocols();
 ```
 
-```python Python
-import requests
-
-protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun']
-results = {}
-
-for protocol in protocols:
-    response = requests.get(
-        'https://api.solixdb.xyz/api/v1/analytics/protocols',
-        params={
-            'protocol_name': protocol,
-            'date_from': '2025-07-20'
-        }
-    )
-    results[protocol] = response.json()
-
-print(results)
-```
-</CodeGroup>
-
-## GraphQL Examples
-
-### Flexible Field Selection
-
-Query only the fields you need:
-
-<CodeGroup>
-```bash
+```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ transactions(protocolName: \"jupiter_v6\", limit: 10) { signature protocolName fee blockTime } }"
+    "query": "query { transactions(filters: { protocols: [\"pump_fun\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }, pagination: { first: 100 }) { edges { node { signature slot protocolName fee computeUnits date hour } } } }"
   }'
+```
+</CodeGroup>
+
+### Get Transaction by Signature
+
+Look up a specific transaction:
+
+<CodeGroup>
+```graphql
+query {
+  signature(signature: "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7") {
+    signature
+    slot
+    blockTime
+    protocolName
+    instructionType
+    fee
+    computeUnits
+    accountsCount
+    date
+    hour
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { signature(signature: \"5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7\") { signature slot blockTime protocolName instructionType fee computeUnits accountsCount date hour } }"
+  }'
+```
+</CodeGroup>
+
+## Aggregations and Analytics
+
+### Protocol Statistics
+
+Get comprehensive statistics for a protocol:
+
+<CodeGroup>
+```graphql
+query {
+  protocolStats(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+  ) {
+    protocolName
+    totalTransactions
+    totalFees
+    totalComputeUnits
+    averageFee
+    averageComputeUnits
+    uniquePrograms
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { protocolStats(filters: { protocols: [\"jupiter_v6\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }) { protocolName totalTransactions totalFees totalComputeUnits averageFee averageComputeUnits uniquePrograms } }"
+  }'
+```
+</CodeGroup>
+
+### Fee Analysis by Day of Week
+
+Analyze fees by day of week to identify patterns:
+
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [DAY_OF_WEEK]
+    metrics: [COUNT, AVG_FEE, P95_FEE, P99_FEE]
+    sort: { field: AVG_FEE, direction: DESC }
+  ) {
+    edges {
+      node {
+        dayOfWeek
+        count
+        avgFee
+        p95Fee
+        p99Fee
+      }
+    }
+  }
+}
 ```
 
 ```javascript JavaScript
 const query = `
   query {
-    transactions(protocolName: "jupiter_v6", limit: 10) {
-      signature
-      protocolName
-      fee
-      blockTime
+    transactions(
+      filters: {
+        protocols: ["jupiter_v6"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      groupBy: [DAY_OF_WEEK]
+      metrics: [COUNT, AVG_FEE, P95_FEE, P99_FEE]
+      sort: { field: AVG_FEE, direction: DESC }
+    ) {
+      edges {
+        node {
+          dayOfWeek
+          count
+          avgFee
+          p95Fee
+          p99Fee
+        }
+      }
     }
   }
 `;
+
+// Map dayOfWeek (0=Sunday, 6=Saturday) to day names
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const response = await fetch('https://api.solixdb.xyz/graphql', {
   method: 'POST',
@@ -212,19 +277,68 @@ const response = await fetch('https://api.solixdb.xyz/graphql', {
 });
 
 const data = await response.json();
-console.log(data);
+const results = data.data.transactions.edges.map(edge => ({
+  day: dayNames[edge.node.dayOfWeek],
+  ...edge.node
+}));
+
+console.log(results);
+```
+</CodeGroup>
+
+### Hourly Protocol Comparison
+
+Compare multiple protocols by hour:
+
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6", "raydium_amm_v3", "pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE]
+    sort: { field: COUNT, direction: DESC }
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        protocol
+        hour
+        count
+        avgFee
+      }
+    }
+  }
+}
 ```
 
 ```python Python
 import requests
+import pandas as pd
 
 query = """
   query {
-    transactions(protocolName: "jupiter_v6", limit: 10) {
-      signature
-      protocolName
-      fee
-      blockTime
+    transactions(
+      filters: {
+        protocols: ["jupiter_v6", "raydium_amm_v3", "pump_fun"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      groupBy: [PROTOCOL, HOUR]
+      metrics: [COUNT, AVG_FEE]
+      sort: { field: COUNT, direction: DESC }
+      pagination: { first: 100 }
+    ) {
+      edges {
+        node {
+          protocol
+          hour
+          count
+          avgFee
+        }
+      }
     }
   }
 """
@@ -233,36 +347,55 @@ response = requests.post(
     'https://api.solixdb.xyz/graphql',
     json={'query': query}
 )
-print(response.json())
+
+data = response.json()
+results = [edge['node'] for edge in data['data']['transactions']['edges']]
+df = pd.DataFrame(results)
+
+# Pivot for easier analysis
+pivot = df.pivot(index='hour', columns='protocol', values='count')
+print(pivot)
 ```
 </CodeGroup>
 
-### Complex Filtering
+## Time Series Analysis
 
-Use GraphQL for complex queries with multiple filters:
+### Daily Transaction Count
+
+Get daily transaction counts:
 
 <CodeGroup>
-```bash
-curl -X POST "https://api.solixdb.xyz/graphql" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "{ transactions(protocolName: \"pump_fun\", dateFrom: \"2025-07-20\", dateTo: \"2025-07-21\", limit: 100) { signature protocolName fee blockTime } }"
-  }'
+```graphql
+query {
+  timeSeries(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    bucketBy: DAY
+    metrics: [COUNT, AVG_FEE]
+  ) {
+    timestamp
+    value
+    label
+  }
+}
 ```
 
 ```javascript JavaScript
 const query = `
   query {
-    transactions(
-      protocolName: "pump_fun"
-      dateFrom: "2025-07-20"
-      dateTo: "2025-07-21"
-      limit: 100
+    timeSeries(
+      filters: {
+        protocols: ["pump_fun"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      bucketBy: DAY
+      metrics: [COUNT, AVG_FEE]
     ) {
-      signature
-      protocolName
-      fee
-      blockTime
+      timestamp
+      value
+      label
     }
   }
 `;
@@ -274,166 +407,381 @@ const response = await fetch('https://api.solixdb.xyz/graphql', {
 });
 
 const data = await response.json();
-console.log(data);
+const timeSeries = data.data.timeSeries;
+
+// Plot with your favorite charting library
+console.log(timeSeries);
 ```
 </CodeGroup>
 
-## SQL Query Examples
+### Weekly Protocol Comparison
 
-### Basic SELECT Query
-
-Execute custom SQL for maximum flexibility:
+Compare protocols over weeks:
 
 <CodeGroup>
-```bash
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
+```graphql
+query {
+  transactions(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [PROTOCOL, WEEK]
+    metrics: [COUNT, SUM_FEE]
+    sort: { field: COUNT, direction: DESC }
+  ) {
+    edges {
+      node {
+        protocol
+        week
+        count
+        sumFee
+      }
+    }
+  }
+}
+```
+</CodeGroup>
+
+## Failed Transaction Analysis
+
+### Analyze Failed Jupiter Swaps
+
+Find and analyze failed Jupiter swaps:
+
+<CodeGroup>
+```graphql
+query {
+  failedTransactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      errorPattern: "insufficient funds"
+    }
+    groupBy: [PROTOCOL, INSTRUCTION_TYPE]
+    metrics: [COUNT]
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        protocolName
+        instructionType
+        errorMessage
+        count
+      }
+    }
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 10"
+    "query": "query { failedTransactions(filters: { protocols: [\"jupiter_v6\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, errorPattern: \"insufficient funds\" }, groupBy: [PROTOCOL, INSTRUCTION_TYPE], metrics: [COUNT], pagination: { first: 100 }) { edges { node { protocolName instructionType errorMessage count } } } }"
   }'
 ```
+</CodeGroup>
 
-```javascript JavaScript
-const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    query: "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
-  }),
-});
+### Failed Transaction Patterns
 
-const data = await response.json();
-console.log(data);
-```
+Identify common failure patterns:
 
-```python Python
-import requests
-
-response = requests.post(
-    'https://api.solixdb.xyz/api/v1/query',
-    json={
-        'query': "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
+<CodeGroup>
+```graphql
+query {
+  failedTransactions(
+    filters: {
+      protocols: ["pump_fun"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
     }
-)
-print(response.json())
+    groupBy: [INSTRUCTION_TYPE]
+    metrics: [COUNT]
+    sort: { field: COUNT, direction: DESC }
+    pagination: { first: 50 }
+  ) {
+    edges {
+      node {
+        instructionType
+        count
+      }
+    }
+  }
+}
 ```
 </CodeGroup>
 
-### Aggregation Queries
+## ML Dataset Export
 
-Calculate metrics and statistics:
+### Export Training Dataset
+
+Export a dataset for ML model training:
 
 <CodeGroup>
-```bash
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '\''2025-07-20'\'' GROUP BY protocol_name"
-  }'
+```graphql
+mutation {
+  exportDataset(
+    config: {
+      format: PARQUET
+      filters: {
+        protocols: ["pump_fun"]
+        dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      }
+      columns: [
+        "protocol_name"
+        "fee"
+        "compute_units"
+        "success"
+        "instruction_type"
+        "hour"
+        "day_of_week"
+        "accounts_count"
+      ]
+      sampling: { strategy: RANDOM, rate: 0.1 }
+      splits: { train: 0.7, test: 0.2, val: 0.1 }
+    }
+  ) {
+    id
+    status
+    progress
+  }
+}
 ```
 
 ```javascript JavaScript
-const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
+// Step 1: Create export job
+const exportMutation = `
+  mutation {
+    exportDataset(
+      config: {
+        format: PARQUET
+        filters: {
+          protocols: ["pump_fun"]
+          dateRange: { start: "2025-01-01", end: "2025-01-31" }
+        }
+        columns: [
+          "protocol_name"
+          "fee"
+          "compute_units"
+          "success"
+          "instruction_type"
+          "hour"
+          "day_of_week"
+          "accounts_count"
+        ]
+        sampling: { strategy: RANDOM, rate: 0.1 }
+        splits: { train: 0.7, test: 0.2, val: 0.1 }
+      }
+    ) {
+      id
+      status
+      progress
+    }
+  }
+`;
+
+const exportResponse = await fetch('https://api.solixdb.xyz/graphql', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    query: "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name"
-  }),
+  body: JSON.stringify({ query: exportMutation }),
 });
 
-const data = await response.json();
-console.log(data);
-```
+const exportData = await exportResponse.json();
+const jobId = exportData.data.exportDataset.id;
 
-```python Python
-import requests
-
-response = requests.post(
-    'https://api.solixdb.xyz/api/v1/query',
-    json={
-        'query': "SELECT protocol_name, COUNT(*) as count, AVG(fee) as avg_fee FROM transactions WHERE date >= '2025-07-20' GROUP BY protocol_name"
+// Step 2: Poll for completion
+async function checkExportStatus(jobId) {
+  const statusQuery = `
+    query {
+      exportJob(id: "${jobId}") {
+        id
+        status
+        progress
+        rowCount
+        fileSize
+        downloadUrl
+        error
+      }
     }
-)
-print(response.json())
-```
-</CodeGroup>
-
-### Export Data for ML Training
-
-Export large datasets for model training:
-
-<CodeGroup>
-```bash
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "SELECT * FROM transactions WHERE protocol_name = '\''pump_fun'\'' AND date >= '\''2025-07-01'\'' AND date <= '\''2025-07-31'\'' LIMIT 10000"
-  }' > training_data.json
-```
-
-```javascript JavaScript
-// For large datasets, consider pagination
-async function exportTrainingData() {
-  const limit = 1000;
-  let offset = 0;
-  const allData = [];
+  `;
   
-  while (true) {
-    const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
+  const response = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: statusQuery }),
+  });
+  
+  return await response.json();
+}
+
+// Poll every 5 seconds
+const interval = setInterval(async () => {
+  const status = await checkExportStatus(jobId);
+  const job = status.data.exportJob;
+  
+  console.log(`Progress: ${job.progress}%`);
+  
+  if (job.status === 'COMPLETED') {
+    console.log('Export complete! Download URL:', job.downloadUrl);
+    clearInterval(interval);
+  } else if (job.status === 'FAILED') {
+    console.error('Export failed:', job.error);
+    clearInterval(interval);
+  }
+}, 5000);
+```
+</CodeGroup>
+
+## Query Complexity Management
+
+### Check Complexity Before Execution
+
+Always check query complexity before executing expensive queries:
+
+<CodeGroup>
+```graphql
+query {
+  queryComplexity(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      protocols: ["pump_fun"]
+    }
+    groupBy: [PROTOCOL, HOUR, INSTRUCTION_TYPE]
+    metrics: [COUNT, AVG_FEE, P95_FEE, P99_FEE]
+  ) {
+    score
+    estimatedRows
+    baseCost
+    recommendations
+  }
+}
+```
+
+```javascript JavaScript
+async function checkAndExecute(query, variables) {
+  // First, check complexity
+  const complexityQuery = `
+    query {
+      queryComplexity(
+        filters: $filters
+        groupBy: $groupBy
+        metrics: $metrics
+      ) {
+        score
+        estimatedRows
+        recommendations
+      }
+    }
+  `;
+  
+  const complexityResponse = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: complexityQuery,
+      variables: {
+        filters: variables.filters,
+        groupBy: variables.groupBy,
+        metrics: variables.metrics
+      }
+    }),
+  });
+  
+  const complexityData = await complexityResponse.json();
+  const complexity = complexityData.data.queryComplexity;
+  
+  if (complexity.score >= 1000) {
+    console.error('Query will be rejected:', complexity.recommendations);
+    return null;
+  }
+  
+  if (complexity.score >= 500) {
+    console.warn('High complexity query:', complexity.recommendations);
+  }
+  
+  // Execute the actual query
+  const response = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  
+  return await response.json();
+}
+```
+</CodeGroup>
+
+## Pagination Examples
+
+### Fetch All Results
+
+Fetch all results using cursor-based pagination:
+
+<CodeGroup>
+```javascript JavaScript
+async function fetchAllTransactions(filters) {
+  let allTransactions = [];
+  let hasNextPage = true;
+  let cursor = null;
+  
+  while (hasNextPage) {
+    const query = `
+      query GetTransactions($first: Int, $after: String) {
+        transactions(
+          filters: $filters
+          pagination: { first: $first, after: $after }
+        ) {
+          edges {
+            node {
+              signature
+              slot
+              protocolName
+              fee
+              computeUnits
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+    
+    const response = await fetch('https://api.solixdb.xyz/graphql', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        query: `SELECT * FROM transactions WHERE protocol_name = 'pump_fun' AND date >= '2025-07-01' AND date <= '2025-07-31' LIMIT ${limit} OFFSET ${offset}`
+        query,
+        variables: {
+          filters,
+          first: 1000,
+          after: cursor
+        }
       }),
     });
     
     const data = await response.json();
-    if (!data.data || data.data.length === 0) break;
+    const connection = data.data.transactions;
     
-    allData.push(...data.data);
-    offset += limit;
+    allTransactions.push(...connection.edges.map(e => e.node));
+    hasNextPage = connection.pageInfo.hasNextPage;
+    cursor = connection.pageInfo.endCursor;
+    
+    console.log(`Fetched ${allTransactions.length} transactions...`);
   }
   
-  // Save to file or process
-  console.log(`Exported ${allData.length} records`);
-  return allData;
+  return allTransactions;
 }
 
-exportTrainingData();
-```
+// Usage
+const filters = {
+  protocols: ["pump_fun"],
+  dateRange: { start: "2025-01-01", end: "2025-01-31" }
+};
 
-```python Python
-import requests
-import json
-
-def export_training_data():
-    limit = 1000
-    offset = 0
-    all_data = []
-    
-    while True:
-        response = requests.post(
-            'https://api.solixdb.xyz/api/v1/query',
-            json={
-                'query': f"SELECT * FROM transactions WHERE protocol_name = 'pump_fun' AND date >= '2025-07-01' AND date <= '2025-07-31' LIMIT {limit} OFFSET {offset}"
-            }
-        )
-        
-        data = response.json()
-        if not data.get('data') or len(data['data']) == 0:
-            break
-        
-        all_data.extend(data['data'])
-        offset += limit
-    
-    # Save to file
-    with open('training_data.json', 'w') as f:
-        json.dump(all_data, f)
-    
-    print(f"Exported {len(all_data)} records")
-    return all_data
-
-export_training_data()
+const allTransactions = await fetchAllTransactions(filters);
+console.log(`Total: ${allTransactions.length} transactions`);
 ```
 </CodeGroup>
 
@@ -448,22 +796,48 @@ Use historical data to test your trading strategy:
 import requests
 import pandas as pd
 
-# Fetch historical Pump.fun trades
-response = requests.get(
-    'https://api.solixdb.xyz/api/v1/transactions',
-    params={
-        'protocol_name': 'pump_fun',
-        'date_from': '2025-07-01',
-        'date_to': '2025-07-31',
-        'limit': 10000
-    }
-)
+def backtest_strategy(protocol, start_date, end_date):
+    query = """
+      query {
+        transactions(
+          filters: {
+            protocols: ["%s"]
+            dateRange: { start: "%s", end: "%s" }
+          }
+          pagination: { first: 10000 }
+        ) {
+          edges {
+            node {
+              signature
+              slot
+              protocolName
+              fee
+              computeUnits
+              date
+              hour
+            }
+          }
+        }
+      }
+    """ % (protocol, start_date, end_date)
+    
+    response = requests.post(
+        'https://api.solixdb.xyz/graphql',
+        json={'query': query}
+    )
+    
+    data = response.json()
+    transactions = [edge['node'] for edge in data['data']['transactions']['edges']]
+    df = pd.DataFrame(transactions)
+    
+    # Your backtesting logic here
+    # Analyze price movements, volumes, fees, etc.
+    
+    return df
 
-data = response.json()['data']
-df = pd.DataFrame(data)
-
-# Your backtesting logic here
-# Analyze price movements, volumes, etc.
+# Backtest on Pump.fun data
+df = backtest_strategy('pump_fun', '2025-01-01', '2025-01-31')
+print(df.describe())
 ```
 </Accordion>
 
@@ -473,18 +847,42 @@ df = pd.DataFrame(data)
 Build real-time dashboards showing protocol metrics:
 
 ```javascript
-async function getProtocolMetrics(protocolName) {
-  const response = await fetch(
-    `https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=${protocolName}&date_from=2025-07-20`
-  );
-  return await response.json();
+async function getProtocolMetrics(protocols, dateRange) {
+  const query = `
+    query {
+      ${protocols.map((p, i) => `
+        protocol${i}: protocolStats(
+          filters: {
+            protocols: ["${p}"]
+            dateRange: { start: "${dateRange.start}", end: "${dateRange.end}" }
+          }
+        ) {
+          protocolName
+          totalTransactions
+          totalFees
+          averageFee
+          averageComputeUnits
+        }
+      `).join('\n')}
+    }
+  `;
+  
+  const response = await fetch('https://api.solixdb.xyz/graphql', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  
+  const data = await response.json();
+  return Object.values(data.data);
 }
 
 // Get metrics for multiple protocols
 const protocols = ['jupiter_v6', 'raydium_amm_v3', 'pump_fun'];
-const metrics = await Promise.all(
-  protocols.map(p => getProtocolMetrics(p))
-);
+const metrics = await getProtocolMetrics(protocols, {
+  start: '2025-01-01',
+  end: '2025-01-31'
+});
 
 // Display in your dashboard
 console.log(metrics);
@@ -495,11 +893,18 @@ console.log(metrics);
 
 <CardGroup cols={2}>
   <Card
-    title="API Reference"
+    title="GraphQL API Reference"
     icon="code"
-    href="/api-reference/rest-api"
+    href="/api-reference/graphql-api"
   >
-    Explore all available endpoints and parameters.
+    Explore all available queries, mutations, and types.
+  </Card>
+  <Card
+    title="Migration Guide"
+    icon="arrow-right"
+    href="/api-reference/migration-guide"
+  >
+    Migrate from REST API to GraphQL.
   </Card>
   <Card
     title="Error Handling"
@@ -507,5 +912,12 @@ console.log(metrics);
     href="/error-handling"
   >
     Learn how to handle errors gracefully.
+  </Card>
+  <Card
+    title="Rate Limiting"
+    icon="clock"
+    href="/rate-limiting"
+  >
+    Understand complexity-based rate limits.
   </Card>
 </CardGroup>

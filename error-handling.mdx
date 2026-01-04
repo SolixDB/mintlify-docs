@@ -3,11 +3,13 @@ title: "Error Handling"
 description: "Understand error responses and how to handle them"
 ---
 
-The API uses standard HTTP status codes and returns error messages in a consistent format.
+The API uses standard HTTP status codes and returns error messages in a consistent format. GraphQL errors follow the GraphQL error specification.
 
-## Error Response Format
+## Error Response Formats
 
-All errors follow this structure:
+### REST API Errors
+
+All REST API errors follow this structure:
 
 ```json
 {
@@ -17,12 +19,33 @@ All errors follow this structure:
 }
 ```
 
+### GraphQL Errors
+
+GraphQL errors follow the standard GraphQL error format:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Error message",
+      "extensions": {
+        "code": "ERROR_CODE",
+        "field": "fieldName",
+        "details": {}
+      },
+      "path": ["queryName", "fieldName"]
+    }
+  ],
+  "data": null
+}
+```
+
 ## HTTP Status Codes
 
 | Code | Meaning | Description |
 |------|---------|-------------|
 | 200 | OK | Request succeeded |
-| 400 | Bad Request | Invalid request parameters |
+| 400 | Bad Request | Invalid request parameters or GraphQL validation error |
 | 404 | Not Found | Resource not found |
 | 429 | Too Many Requests | Rate limit exceeded |
 | 500 | Internal Server Error | Server error |
@@ -34,8 +57,7 @@ All errors follow this structure:
 
 Invalid request parameters or validation errors.
 
-**Example:**
-
+**REST API Example:**
 ```json
 {
   "error": "Validation error",
@@ -48,22 +70,57 @@ Invalid request parameters or validation errors.
 }
 ```
 
+**GraphQL Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "Invalid date format. Expected YYYY-MM-DD",
+      "extensions": {
+        "code": "VALIDATION_ERROR",
+        "field": "filters.dateRange.start"
+      },
+      "path": ["transactions"]
+    }
+  ],
+  "data": null
+}
+```
+
 **Common Causes:**
 - Invalid date format
 - Invalid parameter values
 - Missing required parameters
 - Parameter out of range
+- Invalid GraphQL query syntax
 
 ### 404 Not Found
 
 Resource not found.
 
-**Example:**
-
+**REST API Example:**
 ```json
 {
   "error": "Not Found",
   "message": "Transaction not found"
+}
+```
+
+**GraphQL Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "Transaction not found",
+      "extensions": {
+        "code": "NOT_FOUND"
+      },
+      "path": ["signature"]
+    }
+  ],
+  "data": {
+    "signature": null
+  }
 }
 ```
 
@@ -76,12 +133,29 @@ Resource not found.
 
 Rate limit exceeded.
 
-**Example:**
-
+**REST API Example:**
 ```json
 {
   "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Maximum 100 requests per 60 seconds."
+  "message": "Rate limit exceeded. Complexity budget exhausted."
+}
+```
+
+**GraphQL Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "Rate limit exceeded",
+      "extensions": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "retryAfter": 5,
+        "complexity": 1200,
+        "limit": 1000
+      }
+    }
+  ],
+  "data": null
 }
 ```
 
@@ -91,12 +165,26 @@ Rate limit exceeded.
 
 Server error.
 
-**Example:**
-
+**REST API Example:**
 ```json
 {
   "error": "Internal Server Error",
   "message": "An unexpected error occurred"
+}
+```
+
+**GraphQL Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "An unexpected error occurred",
+      "extensions": {
+        "code": "INTERNAL_SERVER_ERROR"
+      }
+    }
+  ],
+  "data": null
 }
 ```
 
@@ -106,8 +194,7 @@ Server error.
 
 Service temporarily unavailable.
 
-**Example:**
-
+**REST API Example:**
 ```json
 {
   "error": "Service Unavailable",
@@ -115,11 +202,118 @@ Service temporarily unavailable.
 }
 ```
 
+**GraphQL Example:**
+```json
+{
+  "errors": [
+    {
+      "message": "Service is temporarily unavailable",
+      "extensions": {
+        "code": "SERVICE_UNAVAILABLE"
+      }
+    }
+  ],
+  "data": null
+}
+```
+
 **Solution:** Retry after a delay. Check service status.
+
+## GraphQL-Specific Error Codes
+
+### COMPLEXITY_EXCEEDED
+
+Query complexity exceeds the maximum allowed (1000).
+
+```json
+{
+  "errors": [
+    {
+      "message": "Query complexity exceeds limit",
+      "extensions": {
+        "code": "COMPLEXITY_EXCEEDED",
+        "complexity": 1200,
+        "limit": 1000,
+        "recommendations": [
+          "Add date range filter to reduce estimated rows",
+          "Reduce group by dimensions",
+          "Use pagination for large result sets"
+        ]
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+**Solution:** Use `queryComplexity` query to check before execution. Optimize query by adding filters, reducing group by dimensions, or using pagination.
+
+### PAGINATION_REQUIRED
+
+Query returns more than 10k rows without pagination.
+
+```json
+{
+  "errors": [
+    {
+      "message": "Pagination required for queries returning >10k rows",
+      "extensions": {
+        "code": "PAGINATION_REQUIRED",
+        "estimatedRows": 50000
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+**Solution:** Add `pagination: { first: 1000 }` to your query.
+
+### INVALID_FILTER
+
+Invalid filter value or combination.
+
+```json
+{
+  "errors": [
+    {
+      "message": "Invalid filter: dateRange.end must be after dateRange.start",
+      "extensions": {
+        "code": "INVALID_FILTER",
+        "field": "filters.dateRange"
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+**Solution:** Check filter values and ensure they're valid.
+
+### VALIDATION_ERROR
+
+Input validation failed.
+
+```json
+{
+  "errors": [
+    {
+      "message": "Invalid Signature format",
+      "extensions": {
+        "code": "VALIDATION_ERROR",
+        "field": "signature"
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+**Solution:** Ensure input values match expected formats (see [GraphQL API Reference](/api-reference/graphql-api#custom-scalars)).
 
 ## Error Handling Examples
 
-### JavaScript/TypeScript
+### JavaScript/TypeScript (REST API)
 
 ```typescript
 async function handleRequest(url: string, options: RequestInit) {
@@ -160,7 +354,54 @@ async function handleRequest(url: string, options: RequestInit) {
 }
 ```
 
-### Python
+### JavaScript/TypeScript (GraphQL)
+
+```typescript
+async function handleGraphQLRequest(query: string, variables?: any) {
+  try {
+    const response = await fetch('https://api.solixdb.xyz/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables }),
+    });
+    
+    const result = await response.json();
+    
+    if (result.errors) {
+      for (const error of result.errors) {
+        const code = error.extensions?.code;
+        
+        switch (code) {
+          case 'COMPLEXITY_EXCEEDED':
+            console.error('Query too complex:', error.extensions.recommendations);
+            break;
+          case 'PAGINATION_REQUIRED':
+            console.error('Pagination required for large result sets');
+            break;
+          case 'RATE_LIMIT_EXCEEDED':
+            const retryAfter = error.extensions.retryAfter;
+            console.error(`Rate limited. Retry after ${retryAfter}s`);
+            break;
+          case 'VALIDATION_ERROR':
+            console.error('Validation error:', error.extensions.field);
+            break;
+          default:
+            console.error('GraphQL error:', error.message);
+        }
+      }
+      
+      throw new Error(result.errors[0].message);
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error('Request failed:', error);
+    throw error;
+  }
+}
+```
+
+### Python (REST API)
 
 ```python
 import requests
@@ -191,9 +432,49 @@ def handle_request(url: str, headers: Dict[str, str]) -> Any:
         raise
 ```
 
+### Python (GraphQL)
+
+```python
+import requests
+from typing import Dict, Any, Optional
+
+def handle_graphql_request(query: str, variables: Optional[Dict] = None) -> Any:
+    try:
+        response = requests.post(
+            'https://api.solixdb.xyz/graphql',
+            json={'query': query, 'variables': variables or {}}
+        )
+        result = response.json()
+        
+        if 'errors' in result:
+            for error in result['errors']:
+                code = error.get('extensions', {}).get('code')
+                
+                if code == 'COMPLEXITY_EXCEEDED':
+                    print('Query too complex:', error['extensions'].get('recommendations'))
+                elif code == 'PAGINATION_REQUIRED':
+                    print('Pagination required for large result sets')
+                elif code == 'RATE_LIMIT_EXCEEDED':
+                    retry_after = error['extensions'].get('retryAfter')
+                    print(f'Rate limited. Retry after {retry_after}s')
+                elif code == 'VALIDATION_ERROR':
+                    print('Validation error:', error['extensions'].get('field'))
+                else:
+                    print('GraphQL error:', error['message'])
+            
+            raise Exception(result['errors'][0]['message'])
+        
+        return result.get('data')
+    except requests.exceptions.RequestException as e:
+        print(f'Request failed: {e}')
+        raise
+```
+
 ## Retry Logic
 
 Implement retry logic for transient errors (500, 503, 429):
+
+### REST API
 
 ```typescript
 async function retryRequest(
@@ -230,7 +511,81 @@ async function retryRequest(
 }
 ```
 
+### GraphQL
+
+```typescript
+async function retryGraphQLRequest(
+  query: string,
+  variables?: any,
+  maxRetries = 3
+): Promise<any> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch('https://api.solixdb.xyz/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.errors) {
+        const error = result.errors[0];
+        const code = error.extensions?.code;
+        
+        if (code === 'RATE_LIMIT_EXCEEDED') {
+          const retryAfter = error.extensions.retryAfter || Math.pow(2, i);
+          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          continue;
+        }
+        
+        if (response.status >= 500 && response.status < 600) {
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+            continue;
+          }
+        }
+      }
+      
+      if (result.errors) {
+        throw new Error(result.errors[0].message);
+      }
+      
+      return result.data;
+    } catch (error) {
+      if (i === maxRetries - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+```
+
+## Error Handling Best Practices
+
+<AccordionGroup>
+  <Accordion title="Check for errors first" icon="triangle-exclamation">
+    Always check for errors in GraphQL responses before accessing data.
+  </Accordion>
+  <Accordion title="Handle specific error codes" icon="code">
+    Handle specific error codes (COMPLEXITY_EXCEEDED, PAGINATION_REQUIRED) with appropriate actions.
+  </Accordion>
+  <Accordion title="Implement retry logic" icon="arrow-rotate-right">
+    Retry transient errors (500, 503, 429) with exponential backoff.
+  </Accordion>
+  <Accordion title="Log error details" icon="file-lines">
+    Log error details for debugging, including error codes and extensions.
+  </Accordion>
+  <Accordion title="Provide user-friendly messages" icon="user">
+    Translate technical error messages to user-friendly messages in your UI.
+  </Accordion>
+</AccordionGroup>
+
 <Tip>
   For more information on handling rate limits, see our [Rate Limiting](/rate-limiting) guide.
 </Tip>
 
+<Tip>
+  For GraphQL query examples, see our [GraphQL API Reference](/api-reference/graphql-api).
+</Tip>

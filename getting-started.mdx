@@ -1,68 +1,54 @@
 ---
 title: "Getting Started"
-description: "Get started with the SolixDB API in minutes"
+description: "Get started with the SolixDB GraphQL API in minutes"
 ---
 
-This guide will help you get started with the SolixDB API and make your first request to query Solana DeFi data.
+This guide will help you get started with the SolixDB GraphQL API and make your first request to query Solana DeFi data.
 
 ## Prerequisites
 
 - HTTP client (curl, Postman, or your preferred tool)
-- Basic understanding of REST APIs, GraphQL, or SQL
+- Basic understanding of GraphQL
+- (Optional) GraphQL client library for your language
+
+## API Endpoint
+
+All GraphQL requests should be made to:
+
+```
+POST https://api.solixdb.xyz/graphql
+```
 
 ## Making Your First Request
 
-### REST API Example
+### Basic GraphQL Query
 
-The simplest way to get started is with our REST API:
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10"
-```
-
-```javascript JavaScript
-const response = await fetch('https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&limit=10');
-
-const data = await response.json();
-console.log(data);
-```
-
-```python Python
-import requests
-
-response = requests.get(
-    'https://api.solixdb.xyz/api/v1/transactions',
-    params={
-        'protocol_name': 'jupiter_v6',
-        'limit': 10
-    }
-)
-
-print(response.json())
-```
-</CodeGroup>
-
-### GraphQL Example
-
-For more flexible queries, use our GraphQL API:
+The simplest way to get started is with a basic GraphQL query:
 
 <CodeGroup>
-```bash
+```bash curl
 curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "{ transactions(protocolName: \"jupiter_v6\", limit: 10) { signature protocolName fee } }"
+    "query": "{ transactions(filters: { protocols: [\"jupiter_v6\"] }, pagination: { first: 10 }) { edges { node { signature protocolName fee computeUnits } } } }"
   }'
 ```
 
 ```javascript JavaScript
 const query = `
   query {
-    transactions(protocolName: "jupiter_v6", limit: 10) {
-      signature
-      protocolName
-      fee
+    transactions(
+      filters: { protocols: ["jupiter_v6"] }
+      pagination: { first: 10 }
+    ) {
+      edges {
+        node {
+          signature
+          protocolName
+          fee
+          computeUnits
+        }
+      }
     }
   }
 `;
@@ -84,10 +70,18 @@ import requests
 
 query = """
   query {
-    transactions(protocolName: "jupiter_v6", limit: 10) {
-      signature
-      protocolName
-      fee
+    transactions(
+      filters: { protocols: ["jupiter_v6"] }
+      pagination: { first: 10 }
+    ) {
+      edges {
+        node {
+          signature
+          protocolName
+          fee
+          computeUnits
+        }
+      }
     }
   }
 """
@@ -101,62 +95,247 @@ print(response.json())
 ```
 </CodeGroup>
 
-### SQL Query Example
+### Query with Filters
 
-For maximum flexibility, execute custom SQL queries directly:
+Add filters to narrow down your results:
 
 <CodeGroup>
-```bash
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["pump_fun", "pump_amm"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      feeRange: { min: "100000" }
+    }
+    pagination: { first: 100 }
+  ) {
+    edges {
+      node {
+        signature
+        slot
+        protocolName
+        fee
+        computeUnits
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 10"
+    "query": "query { transactions(filters: { protocols: [\"pump_fun\", \"pump_amm\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, feeRange: { min: \"100000\" } }, pagination: { first: 100 }) { edges { node { signature slot protocolName fee computeUnits } cursor } pageInfo { hasNextPage endCursor } } }"
   }'
 ```
+</CodeGroup>
 
-```javascript JavaScript
-const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    query: "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
-  }),
-});
+### Aggregation Query
 
-const data = await response.json();
-console.log(data);
+Use aggregations to calculate statistics:
+
+<CodeGroup>
+```graphql
+query {
+  transactions(
+    filters: {
+      protocols: ["jupiter_v6"]
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS]
+    sort: { field: COUNT, direction: DESC }
+  ) {
+    edges {
+      node {
+        protocol
+        hour
+        count
+        avgFee
+        p95ComputeUnits
+      }
+    }
+  }
+}
 ```
 
-```python Python
-import requests
-
-response = requests.post(
-    'https://api.solixdb.xyz/api/v1/query',
-    json={
-        'query': "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
-    }
-)
-
-print(response.json())
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { transactions(filters: { protocols: [\"jupiter_v6\"], dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" } }, groupBy: [PROTOCOL, HOUR], metrics: [COUNT, AVG_FEE, P95_COMPUTE_UNITS], sort: { field: COUNT, direction: DESC }) { edges { node { protocol hour count avgFee p95ComputeUnits } } } }"
+  }'
 ```
 </CodeGroup>
 
 ## Understanding the Response
 
-All API responses follow a consistent structure:
+GraphQL responses follow this structure:
 
 ```json
 {
-  "data": [...],
-  "meta": {
-    "count": 10,
-    "limit": 10,
-    "offset": 0
+  "data": {
+    "transactions": {
+      "edges": [
+        {
+          "node": {
+            "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+            "protocolName": "jupiter_v6",
+            "fee": "5000",
+            "computeUnits": "200000"
+          },
+          "cursor": "eyJzbG90IjoxMjM0NTY3ODksInNpZ25hdHVyZSI6IjVWRXJ2OE5NeHpiUERvaE5wSmhIb3BOMkM5UjRHNUdhUGV2WWY1aExKOFo3In0="
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "eyJzbG90IjoxMjM0NTY3ODksInNpZ25hdHVyZSI6IjVWRXJ2OE5NeHpiUERvaE5wSmhIb3BOMkM5UjRHNUdhUGV2WWY1aExKOFo3In0="
+      }
+    }
   }
 }
 ```
+
+### Error Responses
+
+If there's an error, the response will include an `errors` array:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Query complexity exceeds limit",
+      "extensions": {
+        "code": "COMPLEXITY_EXCEEDED",
+        "complexity": 1200,
+        "limit": 1000
+      }
+    }
+  ],
+  "data": null
+}
+```
+
+## Query Complexity
+
+Before executing expensive queries, check their complexity:
+
+<CodeGroup>
+```graphql
+query {
+  queryComplexity(
+    filters: {
+      dateRange: { start: "2025-01-01", end: "2025-01-31" }
+      protocols: ["pump_fun"]
+    }
+    groupBy: [PROTOCOL, HOUR]
+    metrics: [COUNT, AVG_FEE]
+  ) {
+    score
+    estimatedRows
+    baseCost
+    recommendations
+  }
+}
+```
+
+```bash curl
+curl -X POST "https://api.solixdb.xyz/graphql" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "query { queryComplexity(filters: { dateRange: { start: \"2025-01-01\", end: \"2025-01-31\" }, protocols: [\"pump_fun\"] }, groupBy: [PROTOCOL, HOUR], metrics: [COUNT, AVG_FEE]) { score estimatedRows baseCost recommendations } }"
+  }'
+```
+</CodeGroup>
+
+<Warning>
+  Queries with complexity >1000 are rejected. Always check complexity before executing expensive queries.
+</Warning>
+
+## Pagination
+
+For large result sets, use cursor-based pagination:
+
+<CodeGroup>
+```graphql
+query GetTransactions($first: Int, $after: String) {
+  transactions(
+    filters: { protocols: ["pump_fun"] }
+    pagination: { first: $first, after: $after }
+  ) {
+    edges {
+      node {
+        signature
+        protocolName
+        fee
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+```
+
+```javascript JavaScript
+async function fetchAllTransactions() {
+  let allTransactions = [];
+  let hasNextPage = true;
+  let cursor = null;
+  
+  while (hasNextPage) {
+    const query = `
+      query GetTransactions($first: Int, $after: String) {
+        transactions(
+          filters: { protocols: ["pump_fun"] }
+          pagination: { first: 1000, after: $after }
+        ) {
+          edges {
+            node {
+              signature
+              protocolName
+              fee
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    `;
+    
+    const response = await fetch('https://api.solixdb.xyz/graphql', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query,
+        variables: { first: 1000, after: cursor }
+      }),
+    });
+    
+    const data = await response.json();
+    const connection = data.data.transactions;
+    
+    allTransactions.push(...connection.edges.map(e => e.node));
+    hasNextPage = connection.pageInfo.hasNextPage;
+    cursor = connection.pageInfo.endCursor;
+  }
+  
+  return allTransactions;
+}
+```
+</CodeGroup>
 
 ## Supported Protocols
 
@@ -174,17 +353,25 @@ Currently, we support the following DEX protocols:
   We're continuously adding support for more protocols. Check our [changelog](https://github.com/solixdb) for updates.
 </Note>
 
+## Authentication
+
+The API is **publicly accessible** and does not require authentication. Rate limiting is applied per IP address based on query complexity.
+
+<Info>
+  For details on rate limiting, see our [Rate Limiting](/rate-limiting) guide.
+</Info>
+
 ## Next Steps
 
 Now that you've made your first request, explore these resources:
 
 <CardGroup cols={2}>
   <Card
-    title="API Reference"
+    title="GraphQL API Reference"
     icon="code"
-    href="/api-reference/rest-api"
+    href="/api-reference/graphql-api"
   >
-    Explore all available endpoints and parameters.
+    Explore all available queries, mutations, and types.
   </Card>
   <Card
     title="Examples"
@@ -194,11 +381,11 @@ Now that you've made your first request, explore these resources:
     See real-world examples for common use cases.
   </Card>
   <Card
-    title="Authentication"
-    icon="key"
-    href="/authentication"
+    title="Migration Guide"
+    icon="arrow-right"
+    href="/api-reference/migration-guide"
   >
-    Learn about IP-based rate limiting.
+    Migrate from REST API to GraphQL.
   </Card>
   <Card
     title="Error Handling"
@@ -206,5 +393,19 @@ Now that you've made your first request, explore these resources:
     href="/error-handling"
   >
     Understand how to handle errors gracefully.
+  </Card>
+  <Card
+    title="Rate Limiting"
+    icon="clock"
+    href="/rate-limiting"
+  >
+    Learn about complexity-based rate limits.
+  </Card>
+  <Card
+    title="REST API (Legacy)"
+    icon="code"
+    href="/api-reference/rest-api"
+  >
+    Legacy REST API documentation.
   </Card>
 </CardGroup>
