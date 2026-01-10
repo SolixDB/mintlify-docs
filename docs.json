@@ -26,7 +26,8 @@
             "pages": [
               "examples",
               "error-handling",
-              "rate-limiting"
+              "rate-limiting",
+              "supported-protocols"
             ]
           },
           {

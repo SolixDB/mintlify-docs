@@ -1,0 +1,543 @@
+---
+title: "Supported Protocols"
+description: "Complete list of supported Solana DeFi protocols and how to use them"
+---
+
+SolixDB indexes and parses transactions from major Solana DeFi protocols, providing instruction-level detail for analytics and research.
+
+## Active Protocols
+
+These protocols are currently indexed and available for querying:
+
+<CardGroup cols={2}>
+  <Card title="Drift V2" icon="exchange-alt">
+    Perpetual futures and spot trading protocol
+  </Card>
+  <Card title="Kamino Farms" icon="seedling">
+    Yield farming and liquidity mining
+  </Card>
+  <Card title="Kamino Lending" icon="piggy-bank">
+    Lending and borrowing protocol
+  </Card>
+  <Card title="Kamino Lending Vault" icon="vault">
+    Vault-based lending products
+  </Card>
+  <Card title="Kamino Limo" icon="layer-group">
+    Liquidity management protocol
+  </Card>
+  <Card title="Meteora DLMM" icon="chart-line">
+    Dynamic Liquidity Market Maker
+  </Card>
+  <Card title="Meteora DAMM V2" icon="chart-bar">
+    Dynamic AMM V2
+  </Card>
+  <Card title="Meteora Dynamic Bonding Curve" icon="wave-square">
+    Dynamic bonding curve AMM
+  </Card>
+</CardGroup>
+
+## Protocol Details
+
+### Drift V2
+
+**Protocol Name:** `drift_v2`  
+**Program ID:** `dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`
+
+Drift Protocol is a decentralized perpetual futures exchange on Solana.
+
+**Common Instruction Types:**
+- `Deposit`
+- `Withdraw`
+- `PlaceOrder`
+- `CancelOrder`
+- `Liquidate`
+- `SettlePnl`
+
+**Example Query:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["drift_v2"],
+      "instructionTypes": ["Deposit", "Withdraw"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+**Get Protocol Stats:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolStats",
+  "params": [{
+    "protocolName": "drift_v2",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    }
+  }]
+}
+```
+
+### Kamino Farms
+
+**Protocol Name:** `kamino_farms`  
+**Program ID:** `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`
+
+Kamino Farms provides yield farming opportunities on Solana.
+
+**Common Instruction Types:**
+- `Deposit`
+- `Withdraw`
+- `Harvest`
+- `Compound`
+
+**Example Query:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getInstructionTypes",
+  "params": [{
+    "protocolName": "kamino_farms",
+    "limit": 20
+  }]
+}
+```
+
+### Kamino Lending
+
+**Protocol Name:** `kamino_lending`  
+**Program ID:** `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`
+
+Kamino Lending is a lending and borrowing protocol.
+
+**Common Instruction Types:**
+- `Deposit`
+- `Withdraw`
+- `Borrow`
+- `Repay`
+- `Liquidate`
+
+**Example Query:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolActivity",
+  "params": [{
+    "protocolName": "kamino_lending",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    },
+    "interval": "day"
+  }]
+}
+```
+
+### Kamino Lending Vault
+
+**Protocol Name:** `kamino_lending_vault`  
+**Program ID:** `KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd`
+
+Vault-based lending products from Kamino.
+
+**Common Instruction Types:**
+- `Deposit`
+- `Withdraw`
+- `Claim`
+
+### Kamino Limo
+
+**Protocol Name:** `kamino_limo`  
+**Program ID:** `LiMoM9rMhrdYrfzUCxQppvxCSG1FcrUK9G8uLq4A1GF`
+
+Liquidity management protocol.
+
+**Common Instruction Types:**
+- `AddLiquidity`
+- `RemoveLiquidity`
+- `Swap`
+
+### Meteora DLMM
+
+**Protocol Name:** `meteora_dlmm`  
+**Program ID:** `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo`
+
+Dynamic Liquidity Market Maker from Meteora.
+
+**Common Instruction Types:**
+- `Swap`
+- `AddLiquidity`
+- `RemoveLiquidity`
+
+### Meteora DAMM V2
+
+**Protocol Name:** `meteora_damm_v2`  
+**Program ID:** `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG`
+
+Dynamic AMM V2 from Meteora.
+
+**Common Instruction Types:**
+- `Swap`
+- `AddLiquidity`
+- `RemoveLiquidity`
+
+### Meteora Dynamic Bonding Curve
+
+**Protocol Name:** `meteora_dynamic_bonding_curve`  
+**Program ID:** `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`
+
+Dynamic bonding curve AMM from Meteora.
+
+**Common Instruction Types:**
+- `Swap`
+- `CreatePool`
+- `UpdateCurve`
+
+## Additional Protocols (Available on Request)
+
+These protocols can be enabled for your account:
+
+- **Jupiter V4** - `jupiter_v4` - Jupiter Aggregator V4
+- **Jupiter V6** - `jupiter_v6` - Jupiter Aggregator V6
+- **Raydium AMM V3** - `raydium_amm_v3` - Raydium AMM V3
+- **Raydium CPMM** - `raydium_cpmm` - Raydium Constant Product Market Maker
+- **Pump.fun** - `pump_fun` - Token launch platform
+- **Pump AMM** - `pump_amm` - Pump AMM
+- **Orca Whirlpool** - `orca_whirlpool` - Orca Whirlpool DEX
+
+<Card title="Request Additional Protocols" icon="envelope" href="mailto:support@solixdb.xyz?subject=Protocol Request">
+  Need access to additional protocols? Contact us to enable them for your account.
+</Card>
+
+## How to Query Protocols
+
+### Method 1: Using JSON-RPC Methods
+
+#### Get Transactions by Protocol
+
+```javascript
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getTransactions',
+    params: [{
+      filters: {
+        protocols: ['drift_v2', 'kamino_lending'],
+        status: 'succeeded'
+      },
+      limit: 100
+    }]
+  })
+});
+```
+
+#### Get Protocol Statistics
+
+```javascript
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getProtocolStats',
+    params: [{
+      protocolName: 'drift_v2',
+      blockTime: {
+        gte: 1735689600,
+        lte: 1738368000
+      }
+    }]
+  })
+});
+```
+
+#### Compare Multiple Protocols
+
+```javascript
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getProtocolComparison',
+    params: [{
+      protocols: ['drift_v2', 'kamino_lending', 'meteora_dlmm'],
+      blockTime: {
+        gte: 1735689600,
+        lte: 1738368000
+      }
+    }]
+  })
+});
+```
+
+#### Get Instruction Types for a Protocol
+
+```javascript
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getInstructionTypes',
+    params: [{
+      protocolName: 'kamino_lending',
+      limit: 20
+    }]
+  })
+});
+```
+
+### Method 2: Using SQL Queries
+
+#### Query by Protocol Name
+
+```sql
+SELECT 
+  signature,
+  block_time,
+  protocol_name,
+  instruction_type,
+  fee,
+  compute_units,
+  success
+FROM transactions
+WHERE protocol_name = 'drift_v2'
+  AND success = 1
+ORDER BY block_time DESC
+LIMIT 100
+```
+
+#### Query Multiple Protocols
+
+```sql
+SELECT 
+  protocol_name,
+  instruction_type,
+  COUNT(*) as count,
+  AVG(fee) as avg_fee,
+  AVG(compute_units) as avg_compute_units
+FROM transactions
+WHERE protocol_name IN ('drift_v2', 'kamino_lending', 'meteora_dlmm')
+  AND block_time >= 1735689600
+  AND block_time <= 1738368000
+GROUP BY protocol_name, instruction_type
+ORDER BY count DESC
+LIMIT 50
+```
+
+#### Get Protocol Statistics
+
+```sql
+SELECT 
+  protocol_name,
+  COUNT(*) as total_transactions,
+  SUM(success) as successful_transactions,
+  (SUM(success) / COUNT(*)) * 100 as success_rate,
+  AVG(fee) as avg_fee,
+  AVG(compute_units) as avg_compute_units
+FROM transactions
+WHERE protocol_name = 'drift_v2'
+  AND block_time >= 1735689600
+  AND block_time <= 1738368000
+GROUP BY protocol_name
+```
+
+## Getting Available Protocols
+
+Use the `getProtocols` method to get a list of all available protocols:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocols",
+  "params": []
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    "drift_v2",
+    "kamino_farms",
+    "kamino_lending",
+    "kamino_lending_vault",
+    "kamino_limo",
+    "meteora_dlmm",
+    "meteora_damm_v2",
+    "meteora_dynamic_bonding_curve"
+  ]
+}
+```
+
+## Protocol-Specific Use Cases
+
+<AccordionGroup>
+  <Accordion title="Trading Analytics" icon="chart-line">
+    Use `getProtocolActivity` to analyze trading volume and patterns over time for protocols like Drift V2.
+  </Accordion>
+  <Accordion title="Lending Analysis" icon="piggy-bank">
+    Query Kamino Lending to analyze deposit/withdraw patterns, borrow rates, and liquidation events.
+  </Accordion>
+  <Accordion title="Yield Farming" icon="seedling">
+    Analyze Kamino Farms to track yield farming activity, harvest frequency, and compound events.
+  </Accordion>
+  <Accordion title="DEX Performance" icon="exchange-alt">
+    Compare DEX protocols (Meteora DLMM, DAMM) to analyze swap volumes, fees, and success rates.
+  </Accordion>
+  <Accordion title="Protocol Comparison" icon="balance-scale">
+    Use `getProtocolComparison` to compare multiple protocols side-by-side on metrics like success rate, fees, and compute units.
+  </Accordion>
+</AccordionGroup>
+
+## Common Patterns
+
+### Pattern 1: Get Recent Activity for a Protocol
+
+```javascript
+// Get last 24 hours of activity
+const oneDayAgo = Math.floor(Date.now() / 1000) - 86400;
+const now = Math.floor(Date.now() / 1000);
+
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getTransactions',
+    params: [{
+      filters: {
+        protocols: ['drift_v2'],
+        blockTime: {
+          gte: oneDayAgo,
+          lte: now
+        },
+        status: 'succeeded'
+      },
+      sortOrder: 'desc',
+      limit: 1000
+    }]
+  })
+});
+```
+
+### Pattern 2: Analyze Instruction Types
+
+```javascript
+// Get all instruction types for a protocol with statistics
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getInstructionTypes',
+    params: [{
+      protocolName: 'kamino_lending',
+      limit: 50
+    }]
+  })
+});
+```
+
+### Pattern 3: Compare Protocol Performance
+
+```javascript
+// Compare multiple protocols
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getProtocolComparison',
+    params: [{
+      protocols: ['drift_v2', 'kamino_lending', 'meteora_dlmm'],
+      blockTime: {
+        gte: 1735689600,
+        lte: 1738368000
+      }
+    }]
+  })
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="RPC Methods"
+    icon="code"
+    href="/api-reference/rpc-methods"
+  >
+    Detailed documentation for all RPC methods.
+  </Card>
+  <Card
+    title="SQL Query API"
+    icon="database"
+    href="/api-reference/sql-query"
+  >
+    Learn how to use SQL queries.
+  </Card>
+  <Card
+    title="Examples"
+    icon="book"
+    href="/examples"
+  >
+    Real-world examples and use cases.
+  </Card>
+  <Card
+    title="Support"
+    icon="envelope"
+    href="/support"
+  >
+    Need help? Contact our support team.
+  </Card>
+</CardGroup>
