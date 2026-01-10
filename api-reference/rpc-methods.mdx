@@ -1,0 +1,247 @@
+---
+title: "RPC Methods"
+description: "Detailed documentation for all JSON-RPC methods"
+---
+
+This page provides detailed documentation for all available JSON-RPC methods.
+
+## getTransactionsForAddress
+
+Get transactions for a specific Solana address.
+
+### Parameters
+
+1. **address** (string, required)
+   - Solana address to query (Base58 encoded)
+   - Example: `"JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"`
+
+2. **options** (object, optional)
+   - `transactionDetails` (string): `"full"`, `"signatures"`, or `"none"` (default: `"full"`)
+   - `sortOrder` (string): `"asc"` or `"desc"` (default: `"asc"`)
+   - `limit` (number): Maximum number of results (default: 100, max: 10000)
+   - `filters` (object, optional):
+     - `blockTime` (object): Time range filter
+       - `gte` (number): Greater than or equal (Unix timestamp)
+       - `lte` (number): Less than or equal (Unix timestamp)
+     - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
+     - `protocols` (array): Array of protocol names
+     - `programIds` (array): Array of program IDs
+     - `signatures` (array): Array of transaction signatures
+
+### Example Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactionsForAddress",
+  "params": [
+    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    {
+      "transactionDetails": "full",
+      "sortOrder": "asc",
+      "limit": 100,
+      "filters": {
+        "blockTime": {
+          "gte": 1735689600,
+          "lte": 1738368000
+        },
+        "status": "succeeded",
+        "protocols": ["jupiter_v6"]
+      }
+    }
+  ]
+}
+```
+
+### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "data": [
+      {
+        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+        "slot": "123456789",
+        "blockTime": 1735689600,
+        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        "protocolName": "jupiter_v6",
+        "instructionType": "swap",
+        "fee": 5000,
+        "computeUnits": 200000,
+        "accountsCount": 10,
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+## getTransaction
+
+Get a specific transaction by signature.
+
+### Parameters
+
+1. **signature** (string, required)
+   - Transaction signature (Base58 encoded, 64-90 characters)
+   - Example: `"5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"`
+
+### Example Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransaction",
+  "params": ["5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"]
+}
+```
+
+### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+    "slot": "123456789",
+    "blockTime": 1735689600,
+    "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    "protocolName": "jupiter_v6",
+    "instructionType": "swap",
+    "fee": 5000,
+    "computeUnits": 200000,
+    "accountsCount": 10,
+    "success": true
+  }
+}
+```
+
+**Note:** Returns `null` if transaction is not found.
+
+## getTransactions
+
+Get transactions with filters (general method).
+
+### Parameters
+
+1. **options** (object, optional)
+   - `sortOrder` (string): `"asc"` or `"desc"` (default: `"desc"`)
+   - `limit` (number): Maximum number of results (default: 100, max: 10000)
+   - `filters` (object, optional):
+     - `blockTime` (object): Time range filter
+       - `gte` (number): Greater than or equal (Unix timestamp)
+       - `lte` (number): Less than or equal (Unix timestamp)
+     - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
+     - `protocols` (array): Array of protocol names
+     - `programIds` (array): Array of program IDs
+     - `signatures` (array): Array of transaction signatures
+
+### Example Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "sortOrder": "desc",
+    "limit": 50,
+    "filters": {
+      "blockTime": {
+        "gte": 1735689600,
+        "lte": 1738368000
+      },
+      "status": "succeeded",
+      "protocols": ["jupiter_v6", "pump_fun"]
+    }
+  }]
+}
+```
+
+### Example Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "data": [
+      {
+        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+        "slot": "123456789",
+        "blockTime": 1735689600,
+        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        "protocolName": "jupiter_v6",
+        "instructionType": "swap",
+        "fee": 5000,
+        "computeUnits": 200000,
+        "accountsCount": 10,
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+## Transaction Object Schema
+
+All transaction objects returned by these methods contain:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `signature` | string | Transaction signature (Base58) |
+| `slot` | string | Solana slot number |
+| `blockTime` | number | Unix timestamp |
+| `programId` | string | Program ID (Base58) |
+| `protocolName` | string | Protocol name |
+| `instructionType` | string | Instruction type |
+| `fee` | number | Transaction fee (lamports) |
+| `computeUnits` | number | Compute units used |
+| `accountsCount` | number | Number of accounts involved |
+| `success` | boolean | Whether transaction succeeded |
+
+## Error Handling
+
+All methods may return errors following JSON-RPC 2.0 specification:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Server error",
+    "data": "Error details"
+  }
+}
+```
+
+Common error codes:
+- `-32600`: Invalid Request
+- `-32601`: Method not found
+- `-32602`: Invalid params
+- `-32000`: Server error
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="JSON-RPC API"
+    icon="code"
+    href="/api-reference/json-rpc-api"
+  >
+    Overview of the JSON-RPC API.
+  </Card>
+  <Card
+    title="Examples"
+    icon="book"
+    href="/examples"
+  >
+    Real-world examples using these methods.
+  </Card>
+</CardGroup>

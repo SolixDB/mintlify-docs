@@ -1,0 +1,390 @@
+---
+title: "JSON-RPC API"
+description: "Complete JSON-RPC 2.0 API reference with all methods and parameters"
+---
+
+The JSON-RPC API provides method-based access to Solana transaction data following the JSON-RPC 2.0 specification. This API is similar to Helius and other RPC providers, making it familiar and easy to integrate.
+
+## Endpoint
+
+```
+POST /api/v1/rpc
+```
+
+**Base URL:** `https://api.solixdb.xyz/api/v1/rpc`
+
+## Authentication
+
+All requests require an API key. Include it in the `x-api-key` header or as an `api-key` query parameter.
+
+<Info>
+  For details on authentication, see our [Authentication](/authentication) guide.
+</Info>
+
+## Request Format
+
+All requests follow the JSON-RPC 2.0 specification:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "methodName",
+  "params": [/* method parameters */]
+}
+```
+
+### Request Fields
+
+- **jsonrpc** (required): Must be `"2.0"`
+- **id** (required): Request identifier (string or number)
+- **method** (required): Method name to call
+- **params** (optional): Array of method parameters
+
+## Response Format
+
+### Success Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    /* method-specific result */
+  }
+}
+```
+
+### Error Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Server error",
+    "data": "Error details"
+  }
+}
+```
+
+### Error Codes
+
+| Code | Description |
+|------|-------------|
+| -32600 | Invalid Request |
+| -32601 | Method not found |
+| -32602 | Invalid params |
+| -32603 | Internal error |
+| -32000 | Server error |
+
+## Available Methods
+
+### getTransactionsForAddress
+
+Get transactions for a specific Solana address.
+
+**Parameters:**
+1. `address` (string, required): Solana address to query
+2. `options` (object, optional): Query options
+   - `transactionDetails` (string): `"full"`, `"signatures"`, or `"none"` (default: `"full"`)
+   - `sortOrder` (string): `"asc"` or `"desc"` (default: `"asc"`)
+   - `limit` (number): Maximum number of results (default: 100, max: 10000)
+   - `filters` (object, optional): Filter options
+     - `blockTime` (object): Time range filter
+       - `gte` (number): Greater than or equal (Unix timestamp)
+       - `lte` (number): Less than or equal (Unix timestamp)
+     - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
+     - `protocols` (array): Array of protocol names
+     - `programIds` (array): Array of program IDs
+     - `signatures` (array): Array of transaction signatures
+
+**Example:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactionsForAddress",
+  "params": [
+    "YOUR_ADDRESS_HERE",
+    {
+      "transactionDetails": "full",
+      "sortOrder": "asc",
+      "limit": 100,
+      "filters": {
+        "blockTime": {
+          "gte": 1735689600,
+          "lte": 1738368000
+        },
+        "status": "succeeded",
+        "protocols": ["jupiter_v6", "pump_fun"]
+      }
+    }
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "data": [
+      {
+        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+        "slot": "123456789",
+        "blockTime": 1735689600,
+        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        "protocolName": "jupiter_v6",
+        "instructionType": "swap",
+        "fee": 5000,
+        "computeUnits": 200000,
+        "accountsCount": 10,
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+### getTransaction
+
+Get a specific transaction by signature.
+
+**Parameters:**
+1. `signature` (string, required): Transaction signature
+
+**Example:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransaction",
+  "params": ["5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"]
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+    "slot": "123456789",
+    "blockTime": 1735689600,
+    "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    "protocolName": "jupiter_v6",
+    "instructionType": "swap",
+    "fee": 5000,
+    "computeUnits": 200000,
+    "accountsCount": 10,
+    "success": true
+  }
+}
+```
+
+**Note:** Returns `null` if transaction not found.
+
+### getTransactions
+
+Get transactions with filters (general method).
+
+**Parameters:**
+1. `options` (object, optional): Query options
+   - `sortOrder` (string): `"asc"` or `"desc"` (default: `"desc"`)
+   - `limit` (number): Maximum number of results (default: 100, max: 10000)
+   - `filters` (object, optional): Filter options
+     - `blockTime` (object): Time range filter
+       - `gte` (number): Greater than or equal (Unix timestamp)
+       - `lte` (number): Less than or equal (Unix timestamp)
+     - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
+     - `protocols` (array): Array of protocol names
+     - `programIds` (array): Array of program IDs
+     - `signatures` (array): Array of transaction signatures
+
+**Example:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "sortOrder": "desc",
+    "limit": 50,
+    "filters": {
+      "blockTime": {
+        "gte": 1735689600,
+        "lte": 1738368000
+      },
+      "status": "succeeded",
+      "protocols": ["jupiter_v6", "pump_fun"]
+    }
+  }]
+}
+```
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "data": [
+      {
+        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+        "slot": "123456789",
+        "blockTime": 1735689600,
+        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        "protocolName": "jupiter_v6",
+        "instructionType": "swap",
+        "fee": 5000,
+        "computeUnits": 200000,
+        "accountsCount": 10,
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+## Transaction Object
+
+All transaction objects contain the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `signature` | string | Transaction signature (Base58) |
+| `slot` | string | Solana slot number |
+| `blockTime` | number | Unix timestamp |
+| `programId` | string | Program ID (Base58) |
+| `protocolName` | string | Protocol name (e.g., "jupiter_v6") |
+| `instructionType` | string | Instruction type |
+| `fee` | number | Transaction fee (lamports) |
+| `computeUnits` | number | Compute units used |
+| `accountsCount` | number | Number of accounts involved |
+| `success` | boolean | Whether transaction succeeded |
+
+## Supported Protocols
+
+- `jupiter_v4` - Jupiter Aggregator V4
+- `jupiter_v6` - Jupiter Aggregator V6
+- `raydium_amm_v3` - Raydium AMM V3
+- `raydium_cp_swap` - Raydium CP Swap
+- `pump_fun` - Pump.fun
+- `pump_amm` - Pump AMM
+- `whirlpool` - Orca Whirlpool
+
+## Code Examples
+
+<CodeGroup>
+```javascript JavaScript
+// Get transactions for an address
+const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'getTransactionsForAddress',
+    params: [
+      'YOUR_ADDRESS_HERE',
+      {
+        transactionDetails: 'full',
+        sortOrder: 'asc',
+        limit: 100,
+        filters: {
+          blockTime: {
+            gte: 1735689600,
+            lte: 1738368000
+          },
+          status: 'succeeded'
+        }
+      }
+    ]
+  })
+});
+
+const data = await response.json();
+console.log('Transactions:', data.result.data);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.solixdb.xyz/api/v1/rpc',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'YOUR_API_KEY'
+    },
+    json={
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'getTransactionsForAddress',
+        'params': [
+            'YOUR_ADDRESS_HERE',
+            {
+                'transactionDetails': 'full',
+                'sortOrder': 'asc',
+                'limit': 100,
+                'filters': {
+                    'blockTime': {
+                        'gte': 1735689600,
+                        'lte': 1738368000
+                    },
+                    'status': 'succeeded'
+                }
+            }
+        ]
+    }
+)
+
+data = response.json()
+print('Transactions:', data['result']['data'])
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="RPC Methods"
+    icon="list"
+    href="/api-reference/rpc-methods"
+  >
+    Detailed documentation for each method.
+  </Card>
+  <Card
+    title="Examples"
+    icon="book"
+    href="/examples"
+  >
+    Real-world examples and use cases.
+  </Card>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn about API key authentication.
+  </Card>
+  <Card
+    title="Rate Limiting"
+    icon="clock"
+    href="/rate-limiting"
+  >
+    Understand plan-based rate limits.
+  </Card>
+</CardGroup>

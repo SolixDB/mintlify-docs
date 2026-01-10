@@ -1,44 +1,32 @@
 ---
 title: "Rate Limiting"
-description: "Learn about complexity-based rate limits and best practices"
+description: "Learn about plan-based rate limits and best practices"
 ---
 
-The API implements **complexity-based rate limiting** to ensure fair usage and maintain service quality. Rate limits are calculated based on query complexity, not just request count.
+The API implements **plan-based rate limiting** to ensure fair usage and maintain service quality. Rate limits are based on your subscription plan tier, not query complexity.
 
 ## How It Works
 
-Rate limiting uses a **logarithmic tier system** based on query complexity:
+Rate limiting uses a **plan-based tier system**:
 
-| Complexity Score | Rate Limit (per minute) |
-|------------------|-------------------------|
-| < 50             | 200                     |
-| < 100            | 100                     |
-| < 200            | 50                      |
-| < 500            | 20                      |
-| < 1000           | 10                      |
-| ≥ 1000           | Rejected                |
+| Plan | Rate Limit (per minute) |
+|------|-------------------------|
+| **Free** | 100 requests |
+| **x402** | 500 requests |
+| **Enterprise** | 2000 requests |
 
-### Complexity Calculation
+### Sliding Window
 
-Query complexity is calculated as:
-
-```
-base_cost = estimated_rows / 10000
-group_by_multiplier = 2^dimensions
-aggregation_cost = 1 + (0.1 * number_of_aggregations)
-final_score = base_cost * group_by_multiplier * aggregation_cost
-```
+Rate limiting uses a **sliding window** approach:
+- Tracks total requests in the last 60 seconds
+- Each request consumes 1 from your budget
+- Budget resets as requests age out of the window
 
 **Example:**
-- Query with 100k estimated rows, 2 group by dimensions, 3 aggregations:
-  - Base cost: 100000 / 10000 = 10
-  - Group by multiplier: 2^2 = 4
-  - Aggregation cost: 1 + (0.1 * 3) = 1.3
-  - Final score: 10 * 4 * 1.3 = **52** (tier: < 100, limit: 100/min)
-
-<Info>
-  Use the `queryComplexity` query to check complexity before executing expensive queries. See [GraphQL API Reference](/api-reference/graphql-api#querycomplexity).
-</Info>
+- At 12:00:00, you make 50 requests
+- At 12:00:30, you make another 30 requests
+- At 12:01:00, the first 50 requests age out, leaving 30 in the window
+- Your remaining budget = limit - 30
 
 ## Rate Limit Headers
 
@@ -48,54 +36,44 @@ Every API response includes rate limit information in the headers:
 X-RateLimit-Limit: 100
 X-RateLimit-Remaining: 95
 X-RateLimit-Reset: 2025-07-20T12:01:00Z
+X-RateLimit-Plan: free
 Retry-After: 5
 ```
 
 ### Header Descriptions
 
-- **X-RateLimit-Limit:** Maximum complexity allowed in the current window
-- **X-RateLimit-Remaining:** Remaining complexity budget in the current window
+- **X-RateLimit-Limit:** Maximum requests allowed per minute for your plan
+- **X-RateLimit-Remaining:** Remaining requests in the current window
 - **X-RateLimit-Reset:** ISO 8601 timestamp when the rate limit window resets
+- **X-RateLimit-Plan:** Your current subscription plan (free/x402/enterprise)
 - **Retry-After:** Seconds to wait before retrying (only present on 429 responses)
-
-## Sliding Window
-
-Rate limiting uses a **sliding window** approach:
-- Tracks total complexity used in the last 60 seconds
-- Each query consumes complexity from your budget
-- Budget resets as queries age out of the window
-
-**Example:**
-- At 12:00:00, you execute a query with complexity 50
-- At 12:00:30, you execute another query with complexity 30
-- At 12:01:00, the first query (50) ages out, leaving 30 in the window
-- Your remaining budget = limit - 30
 
 ## Rate Limit Exceeded
 
 When you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
 
-**REST API:**
+**JSON-RPC:**
 ```json
 {
-  "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Complexity budget exhausted."
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Too Many Requests",
+    "data": "Rate limit exceeded for plan 'free'. Limit: 100 requests/minute, Used: 100. Retry after 60 seconds."
+  }
 }
 ```
 
-**GraphQL:**
+**SQL Query:**
 ```json
 {
-  "errors": [
-    {
-      "message": "Rate limit exceeded",
-      "extensions": {
-        "code": "RATE_LIMIT_EXCEEDED",
-        "retryAfter": 5
-      }
-    }
-  ],
-  "data": null
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded for plan 'free'. Limit: 100 requests/minute, Used: 100. Retry after 60 seconds.",
+  "plan": "free",
+  "limit": 100,
+  "used": 100,
+  "retryAfter": 60
 }
 ```
 
@@ -103,36 +81,22 @@ When you exceed the rate limit, you'll receive a `429 Too Many Requests` respons
 
 ## Handling Rate Limits
 
-### Check Complexity Before Execution
-
-Use the `queryComplexity` query to estimate cost:
-
-```graphql
-query {
-  queryComplexity(
-    filters: {
-      dateRange: { start: "2025-01-01", end: "2025-01-31" }
-      protocols: ["pump_fun"]
-    }
-    groupBy: [PROTOCOL, HOUR]
-    metrics: [COUNT, AVG_FEE]
-  ) {
-    score
-    estimatedRows
-    recommendations
-  }
-}
-```
-
 ### Exponential Backoff
 
 Implement exponential backoff when you receive a 429 response:
 
 ```javascript
-async function makeRequest(url, options, retries = 3) {
+async function makeRequest(url, apiKey, body, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify(body)
+      });
       
       if (response.status === 429) {
         const retryAfter = response.headers.get('Retry-After');
@@ -140,6 +104,7 @@ async function makeRequest(url, options, retries = 3) {
           ? parseInt(retryAfter) * 1000 
           : Math.pow(2, i) * 1000; // Exponential backoff
         
+        console.log(`Rate limited. Retrying after ${waitTime}ms...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
       }
@@ -155,55 +120,34 @@ async function makeRequest(url, options, retries = 3) {
 
 ### Respect Rate Limit Headers
 
-Monitor complexity budget and adjust request rate:
+Monitor your rate limit budget and adjust request rate:
 
 ```javascript
-const response = await fetch(url, options);
-const remaining = parseInt(response.headers.get('X-RateLimit-Remaining'));
-const limit = parseInt(response.headers.get('X-RateLimit-Limit'));
+async function makeRateLimitAwareRequest(url, apiKey, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey
+    },
+    body: JSON.stringify(body)
+  });
 
-// If using more than 80% of budget, slow down
-if (remaining < limit * 0.2) {
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  const remaining = parseInt(response.headers.get('X-RateLimit-Remaining'));
+  const limit = parseInt(response.headers.get('X-RateLimit-Limit'));
+  const plan = response.headers.get('X-RateLimit-Plan');
+
+  console.log(`Plan: ${plan}, Limit: ${limit}/min, Remaining: ${remaining}`);
+
+  // If using more than 80% of budget, slow down
+  if (remaining < limit * 0.2) {
+    console.warn('Rate limit nearly exhausted, slowing down...');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  return response;
 }
 ```
-
-### Optimize Query Complexity
-
-Reduce complexity to stay within limits:
-
-1. **Add filters** to reduce estimated rows:
-   ```graphql
-   # High complexity (large date range)
-   transactions(filters: { dateRange: { start: "2024-01-01", end: "2025-01-31" } })
-   
-   # Lower complexity (smaller date range)
-   transactions(filters: { dateRange: { start: "2025-01-01", end: "2025-01-31" } })
-   ```
-
-2. **Reduce group by dimensions**:
-   ```graphql
-   # Complexity multiplier: 2^3 = 8
-   groupBy: [PROTOCOL, HOUR, INSTRUCTION_TYPE]
-   
-   # Complexity multiplier: 2^2 = 4
-   groupBy: [PROTOCOL, HOUR]
-   ```
-
-3. **Use pagination** for large result sets:
-   ```graphql
-   # Forces pagination if >10k rows
-   transactions(pagination: { first: 1000 })
-   ```
-
-4. **Limit aggregations**:
-   ```graphql
-   # Lower cost
-   metrics: [COUNT, AVG_FEE]
-   
-   # Higher cost
-   metrics: [COUNT, AVG_FEE, P50_FEE, P95_FEE, P99_FEE, SUM_FEE, ...]
-   ```
 
 ### Caching
 
@@ -223,6 +167,29 @@ async function getCachedData(key, fetcher, ttl = 60000) {
   
   return data;
 }
+
+// Usage
+const transactions = await getCachedData(
+  'jupiter_v6_recent',
+  async () => {
+    const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'YOUR_API_KEY'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTransactions',
+        params: [{ filters: { protocols: ['jupiter_v6'] }, limit: 100 }]
+      })
+    });
+    const data = await response.json();
+    return data.result.data;
+  },
+  60000 // Cache for 60 seconds
+);
 ```
 
 <Info>
@@ -233,108 +200,86 @@ async function getCachedData(key, fetcher, ttl = 60000) {
   - Aggregations: 30 min cache
 </Info>
 
-## Export Mutations
+### Batch Requests Efficiently
 
-Export dataset mutations have separate rate limits:
+Instead of making many small requests, batch them when possible:
 
-- **Limit:** 5 exports per hour per IP
-- **Complexity:** Exports are processed in background, complexity applies to job creation
-
-```graphql
-mutation {
-  exportDataset(config: { ... }) {
-    id
-    status
-  }
+```javascript
+// ❌ Bad: Multiple small requests
+for (const address of addresses) {
+  await fetch('https://api.solixdb.xyz/api/v1/rpc', {
+    method: 'POST',
+    headers: { 'x-api-key': 'YOUR_API_KEY' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'getTransactionsForAddress',
+      params: [address, { limit: 10 }]
+    })
+  });
 }
+
+// ✅ Good: Use SQL query for batch operations
+await fetch('https://api.solixdb.xyz/api/v1/query', {
+  method: 'POST',
+  headers: { 'x-api-key': 'YOUR_API_KEY' },
+  body: JSON.stringify({
+    query: `SELECT * FROM transactions WHERE program_id IN (${addresses.map(a => `'${a}'`).join(', ')}) LIMIT 1000`
+  })
+});
 ```
 
-## Toggle-able Rate Limiting
+## Upgrading Your Plan
 
-Rate limiting can be disabled server-side by setting `ENABLE_RATE_LIMIT=false`. This is useful for:
-- Development environments
-- Internal services
-- High-trust clients
+If you frequently hit rate limits, consider upgrading your plan:
 
-<Warning>
-  Rate limiting is enabled by default in production. Contact support if you need custom rate limits or disabling for your use case.
-</Warning>
+| Plan | Rate Limit | Best For |
+|------|------------|----------|
+| **Free** | 100/min | Testing, small projects |
+| **x402** | 500/min | Production apps, moderate traffic |
+| **Enterprise** | 2000/min | High-traffic applications, analytics platforms |
+
+<Info>
+  Contact support to upgrade your plan or discuss custom rate limits for enterprise needs.
+</Info>
 
 ## Best Practices
 
 <AccordionGroup>
-  <Accordion title="Check complexity before execution" icon="calculator">
-    Use the `queryComplexity` query to estimate cost and avoid rejected queries.
+  <Accordion title="Monitor rate limit headers" icon="chart-line">
+    Track `X-RateLimit-Remaining` to proactively manage your request rate and avoid hitting limits.
   </Accordion>
   <Accordion title="Implement exponential backoff" icon="arrow-rotate-right">
-    Use exponential backoff with `Retry-After` header for 429 responses.
+    Use exponential backoff with `Retry-After` header for 429 responses to avoid overwhelming the API.
   </Accordion>
-  <Accordion title="Monitor rate limit headers" icon="chart-line">
-    Track `X-RateLimit-Remaining` to proactively manage your request rate.
+  <Accordion title="Cache responses" icon="layer-group">
+    Cache responses to reduce API calls and stay within rate limits, especially for historical data.
   </Accordion>
-  <Accordion title="Optimize query complexity" icon="gear">
-    Add filters, reduce group by dimensions, and use pagination to lower complexity.
+  <Accordion title="Batch requests efficiently" icon="boxes">
+    Use SQL queries for batch operations instead of making many small JSON-RPC requests.
   </Accordion>
-  <Accordion title="Implement caching" icon="layer-group">
-    Cache responses to reduce API calls and stay within rate limits.
+  <Accordion title="Use appropriate plan tier" icon="chart-bar">
+    Choose the plan tier that matches your usage patterns. Upgrade if you frequently hit limits.
   </Accordion>
-  <Accordion title="Use pagination for large queries" icon="arrow-right">
-    Queries returning >10k rows require pagination. Use cursor-based pagination for efficiency.
+  <Accordion title="Handle errors gracefully" icon="triangle-exclamation">
+    Implement proper error handling for 429 responses with retry logic and user-friendly messages.
   </Accordion>
 </AccordionGroup>
 
 ## Examples
 
-### Checking Complexity
+### Rate Limit Aware Request Function
 
 ```javascript
-async function checkComplexity(filters, groupBy, metrics) {
-  const query = `
-    query {
-      queryComplexity(
-        filters: $filters
-        groupBy: $groupBy
-        metrics: $metrics
-      ) {
-        score
-        estimatedRows
-        recommendations
-      }
-    }
-  `;
-  
-  const response = await fetch('https://api.solixdb.xyz/graphql', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query,
-      variables: { filters, groupBy, metrics }
-    }),
-  });
-  
-  const data = await response.json();
-  const complexity = data.data.queryComplexity;
-  
-  if (complexity.score >= 1000) {
-    console.warn('Query will be rejected:', complexity.recommendations);
-    return false;
-  }
-  
-  return true;
-}
-```
-
-### Rate Limit Aware Request
-
-```javascript
-async function makeRateLimitAwareRequest(query, variables) {
-  const maxRetries = 3;
-  
+async function makeRateLimitAwareRequest(url, apiKey, body, maxRetries = 3) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const response = await fetch('https://api.solixdb.xyz/graphql', {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey
+      },
+      body: JSON.stringify(body)
     });
     
     if (response.status === 429) {
@@ -359,10 +304,67 @@ async function makeRateLimitAwareRequest(query, variables) {
 }
 ```
 
+### Monitoring Rate Limits
+
+```javascript
+class RateLimitMonitor {
+  constructor(apiKey) {
+    this.apiKey = apiKey;
+    this.usageHistory = [];
+  }
+
+  async makeRequest(url, body) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.apiKey
+      },
+      body: JSON.stringify(body)
+    });
+
+    const limit = parseInt(response.headers.get('X-RateLimit-Limit'));
+    const remaining = parseInt(response.headers.get('X-RateLimit-Remaining'));
+    const plan = response.headers.get('X-RateLimit-Plan');
+
+    this.usageHistory.push({
+      timestamp: Date.now(),
+      limit,
+      remaining,
+      plan
+    });
+
+    // Keep only last 100 records
+    if (this.usageHistory.length > 100) {
+      this.usageHistory.shift();
+    }
+
+    // Warn if usage is high
+    if (remaining < limit * 0.2) {
+      console.warn(`⚠️  Rate limit warning: ${remaining}/${limit} remaining (${plan} plan)`);
+    }
+
+    return response;
+  }
+
+  getUsageStats() {
+    const recent = this.usageHistory.slice(-10);
+    const avgRemaining = recent.reduce((sum, r) => sum + r.remaining, 0) / recent.length;
+    const minRemaining = Math.min(...recent.map(r => r.remaining));
+    
+    return {
+      averageRemaining: avgRemaining,
+      minimumRemaining: minRemaining,
+      recentUsage: recent
+    };
+  }
+}
+```
+
 <Tip>
   For more information on error handling, see our [Error Handling](/error-handling) guide.
 </Tip>
 
 <Tip>
-  For GraphQL query examples, see our [GraphQL API Reference](/api-reference/graphql-api).
+  For API method examples, see our [JSON-RPC API Reference](/api-reference/json-rpc-api).
 </Tip>

@@ -3,7 +3,7 @@ title: "Error Handling"
 description: "Understand error responses and how to handle them"
 ---
 
-The API uses standard HTTP status codes and returns error messages in a consistent format. GraphQL errors follow the GraphQL error specification.
+The API uses standard HTTP status codes and returns error messages in a consistent format. JSON-RPC errors follow the JSON-RPC 2.0 error specification.
 
 ## Error Response Formats
 
@@ -19,33 +19,39 @@ All REST API errors follow this structure:
 }
 ```
 
-### GraphQL Errors
+### JSON-RPC Errors
 
-GraphQL errors follow the standard GraphQL error format:
+JSON-RPC errors follow the JSON-RPC 2.0 specification:
 
 ```json
 {
-  "errors": [
-    {
-      "message": "Error message",
-      "extensions": {
-        "code": "ERROR_CODE",
-        "field": "fieldName",
-        "details": {}
-      },
-      "path": ["queryName", "fieldName"]
-    }
-  ],
-  "data": null
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Server error",
+    "data": "Error details"
+  }
 }
 ```
+
+### JSON-RPC Error Codes
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| -32600 | Invalid Request | The JSON sent is not a valid Request object |
+| -32601 | Method not found | The method does not exist / is not available |
+| -32602 | Invalid params | Invalid method parameter(s) |
+| -32603 | Internal error | Internal JSON-RPC error |
+| -32000 | Server error | Generic server error |
 
 ## HTTP Status Codes
 
 | Code | Meaning | Description |
 |------|---------|-------------|
 | 200 | OK | Request succeeded |
-| 400 | Bad Request | Invalid request parameters or GraphQL validation error |
+| 400 | Bad Request | Invalid request parameters or query validation error |
+| 401 | Unauthorized | Missing or invalid API key |
 | 404 | Not Found | Resource not found |
 | 429 | Too Many Requests | Rate limit exceeded |
 | 500 | Internal Server Error | Server error |
@@ -60,39 +66,62 @@ Invalid request parameters or validation errors.
 **REST API Example:**
 ```json
 {
-  "error": "Validation error",
-  "details": [
-    {
-      "path": ["date_from"],
-      "message": "Invalid date format. Expected YYYY-MM-DD"
-    }
-  ]
+  "error": "Invalid query",
+  "message": "Only SELECT queries are allowed"
 }
 ```
 
-**GraphQL Example:**
+**JSON-RPC Example:**
 ```json
 {
-  "errors": [
-    {
-      "message": "Invalid date format. Expected YYYY-MM-DD",
-      "extensions": {
-        "code": "VALIDATION_ERROR",
-        "field": "filters.dateRange.start"
-      },
-      "path": ["transactions"]
-    }
-  ],
-  "data": null
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32602,
+    "message": "Invalid params",
+    "data": "getTransactionsForAddress requires address as first parameter"
+  }
 }
 ```
 
 **Common Causes:**
-- Invalid date format
+- Invalid SQL query syntax
 - Invalid parameter values
 - Missing required parameters
 - Parameter out of range
-- Invalid GraphQL query syntax
+- Invalid JSON-RPC request format
+
+### 401 Unauthorized
+
+Missing or invalid API key.
+
+**REST API Example:**
+```json
+{
+  "error": "Unauthorized",
+  "message": "API key is required. Provide it via x-api-key header or api-key query parameter."
+}
+```
+
+**JSON-RPC Example:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Unauthorized",
+    "data": "Invalid or inactive API key."
+  }
+}
+```
+
+**Common Causes:**
+- Missing API key header
+- Invalid API key
+- Inactive or revoked API key
+
+**Solution:** Ensure you're including a valid API key in the `x-api-key` header or `api-key` query parameter.
 
 ### 404 Not Found
 
@@ -106,21 +135,12 @@ Resource not found.
 }
 ```
 
-**GraphQL Example:**
+**JSON-RPC Example:**
 ```json
 {
-  "errors": [
-    {
-      "message": "Transaction not found",
-      "extensions": {
-        "code": "NOT_FOUND"
-      },
-      "path": ["signature"]
-    }
-  ],
-  "data": {
-    "signature": null
-  }
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": null
 }
 ```
 
@@ -137,25 +157,24 @@ Rate limit exceeded.
 ```json
 {
   "error": "Too Many Requests",
-  "message": "Rate limit exceeded. Complexity budget exhausted."
+  "message": "Rate limit exceeded for plan 'free'. Limit: 100 requests/minute, Used: 100. Retry after 60 seconds.",
+  "plan": "free",
+  "limit": 100,
+  "used": 100,
+  "retryAfter": 60
 }
 ```
 
-**GraphQL Example:**
+**JSON-RPC Example:**
 ```json
 {
-  "errors": [
-    {
-      "message": "Rate limit exceeded",
-      "extensions": {
-        "code": "RATE_LIMIT_EXCEEDED",
-        "retryAfter": 5,
-        "complexity": 1200,
-        "limit": 1000
-      }
-    }
-  ],
-  "data": null
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32000,
+    "message": "Too Many Requests",
+    "data": "Rate limit exceeded for plan 'free'. Limit: 100 requests/minute, Used: 100. Retry after 60 seconds."
+  }
 }
 ```
 
@@ -173,18 +192,16 @@ Server error.
 }
 ```
 
-**GraphQL Example:**
+**JSON-RPC Example:**
 ```json
 {
-  "errors": [
-    {
-      "message": "An unexpected error occurred",
-      "extensions": {
-        "code": "INTERNAL_SERVER_ERROR"
-      }
-    }
-  ],
-  "data": null
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32603,
+    "message": "Internal error",
+    "data": "An unexpected error occurred"
+  }
 }
 ```
 
@@ -202,137 +219,88 @@ Service temporarily unavailable.
 }
 ```
 
-**GraphQL Example:**
+**JSON-RPC Example:**
 ```json
 {
-  "errors": [
-    {
-      "message": "Service is temporarily unavailable",
-      "extensions": {
-        "code": "SERVICE_UNAVAILABLE"
-      }
-    }
-  ],
-  "data": null
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": {
+    "code": -32603,
+    "message": "Internal error",
+    "data": "Service is temporarily unavailable"
+  }
 }
 ```
 
-**Solution:** Retry after a delay. Check service status.
+**Solution:** Retry after a delay. Check service status via `/health` endpoint.
 
-## GraphQL-Specific Error Codes
+## SQL Query Errors
 
-### COMPLEXITY_EXCEEDED
-
-Query complexity exceeds the maximum allowed (1000).
+### Invalid Query
 
 ```json
 {
-  "errors": [
-    {
-      "message": "Query complexity exceeds limit",
-      "extensions": {
-        "code": "COMPLEXITY_EXCEEDED",
-        "complexity": 1200,
-        "limit": 1000,
-        "recommendations": [
-          "Add date range filter to reduce estimated rows",
-          "Reduce group by dimensions",
-          "Use pagination for large result sets"
-        ]
-      }
-    }
-  ],
-  "data": null
+  "error": "Invalid query",
+  "message": "Only SELECT queries are allowed"
 }
 ```
 
-**Solution:** Use `queryComplexity` query to check before execution. Optimize query by adding filters, reducing group by dimensions, or using pagination.
+**Status Code:** `400 Bad Request`
 
-### PAGINATION_REQUIRED
-
-Query returns more than 10k rows without pagination.
+### LIMIT Exceeded
 
 ```json
 {
-  "errors": [
-    {
-      "message": "Pagination required for queries returning >10k rows",
-      "extensions": {
-        "code": "PAGINATION_REQUIRED",
-        "estimatedRows": 50000
-      }
-    }
-  ],
-  "data": null
+  "error": "Invalid query",
+  "message": "LIMIT value cannot exceed 10,000 rows. Please reduce the limit."
 }
 ```
 
-**Solution:** Add `pagination: { first: 1000 }` to your query.
+**Status Code:** `400 Bad Request`
 
-### INVALID_FILTER
-
-Invalid filter value or combination.
+### Query Too Long
 
 ```json
 {
-  "errors": [
-    {
-      "message": "Invalid filter: dateRange.end must be after dateRange.start",
-      "extensions": {
-        "code": "INVALID_FILTER",
-        "field": "filters.dateRange"
-      }
-    }
-  ],
-  "data": null
+  "error": "Invalid query",
+  "message": "Query is too long. Maximum length is 100,000 characters."
 }
 ```
 
-**Solution:** Check filter values and ensure they're valid.
-
-### VALIDATION_ERROR
-
-Input validation failed.
-
-```json
-{
-  "errors": [
-    {
-      "message": "Invalid Signature format",
-      "extensions": {
-        "code": "VALIDATION_ERROR",
-        "field": "signature"
-      }
-    }
-  ],
-  "data": null
-}
-```
-
-**Solution:** Ensure input values match expected formats (see [GraphQL API Reference](/api-reference/graphql-api#custom-scalars)).
+**Status Code:** `400 Bad Request`
 
 ## Error Handling Examples
 
 ### JavaScript/TypeScript (REST API)
 
 ```typescript
-async function handleRequest(url: string, options: RequestInit) {
+async function handleRequest(url: string, apiKey: string, body: any) {
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey
+      },
+      body: JSON.stringify(body)
+    });
     
     if (!response.ok) {
       const error = await response.json();
       
       switch (response.status) {
         case 400:
-          console.error('Validation error:', error.details);
+          console.error('Validation error:', error.message);
+          break;
+        case 401:
+          console.error('Authentication error:', error.message);
           break;
         case 404:
           console.error('Resource not found');
           break;
         case 429:
-          const resetTime = response.headers.get('X-RateLimit-Reset');
-          console.error('Rate limit exceeded. Reset at:', resetTime);
+          const retryAfter = error.retryAfter || response.headers.get('Retry-After');
+          console.error(`Rate limit exceeded. Retry after ${retryAfter}s`);
           break;
         case 500:
         case 503:
@@ -354,46 +322,55 @@ async function handleRequest(url: string, options: RequestInit) {
 }
 ```
 
-### JavaScript/TypeScript (GraphQL)
+### JavaScript/TypeScript (JSON-RPC)
 
 ```typescript
-async function handleGraphQLRequest(query: string, variables?: any) {
+async function handleRPCRequest(method: string, params: any[], apiKey: string) {
   try {
-    const response = await fetch('https://api.solixdb.xyz/graphql', {
+    const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables }),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method,
+        params
+      })
     });
     
     const result = await response.json();
     
-    if (result.errors) {
-      for (const error of result.errors) {
-        const code = error.extensions?.code;
-        
-        switch (code) {
-          case 'COMPLEXITY_EXCEEDED':
-            console.error('Query too complex:', error.extensions.recommendations);
-            break;
-          case 'PAGINATION_REQUIRED':
-            console.error('Pagination required for large result sets');
-            break;
-          case 'RATE_LIMIT_EXCEEDED':
-            const retryAfter = error.extensions.retryAfter;
-            console.error(`Rate limited. Retry after ${retryAfter}s`);
-            break;
-          case 'VALIDATION_ERROR':
-            console.error('Validation error:', error.extensions.field);
-            break;
-          default:
-            console.error('GraphQL error:', error.message);
-        }
+    if (result.error) {
+      const { code, message, data } = result.error;
+      
+      switch (code) {
+        case -32600:
+          console.error('Invalid request:', message);
+          break;
+        case -32601:
+          console.error('Method not found:', method);
+          break;
+        case -32602:
+          console.error('Invalid params:', data);
+          break;
+        case -32000:
+          if (message.includes('Rate limit')) {
+            console.error('Rate limit exceeded:', data);
+          } else {
+            console.error('Server error:', message);
+          }
+          break;
+        default:
+          console.error('RPC error:', message);
       }
       
-      throw new Error(result.errors[0].message);
+      throw new Error(message);
     }
     
-    return result.data;
+    return result.result;
   } catch (error) {
     console.error('Request failed:', error);
     throw error;
@@ -407,21 +384,30 @@ async function handleGraphQLRequest(query: string, variables?: any) {
 import requests
 from typing import Dict, Any
 
-def handle_request(url: str, headers: Dict[str, str]) -> Any:
+def handle_request(url: str, api_key: str, body: Dict[str, Any]) -> Any:
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.post(
+            url,
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': api_key
+            },
+            json=body
+        )
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
         error = response.json()
         
         if response.status_code == 400:
-            print('Validation error:', error.get('details'))
+            print('Validation error:', error.get('message'))
+        elif response.status_code == 401:
+            print('Authentication error:', error.get('message'))
         elif response.status_code == 404:
             print('Resource not found')
         elif response.status_code == 429:
-            reset_time = response.headers.get('X-RateLimit-Reset')
-            print(f'Rate limit exceeded. Reset at: {reset_time}')
+            retry_after = error.get('retryAfter') or response.headers.get('Retry-After')
+            print(f'Rate limit exceeded. Retry after {retry_after}s')
         elif response.status_code in [500, 503]:
             print('Server error. Retrying...')
             # Implement retry logic
@@ -432,39 +418,52 @@ def handle_request(url: str, headers: Dict[str, str]) -> Any:
         raise
 ```
 
-### Python (GraphQL)
+### Python (JSON-RPC)
 
 ```python
 import requests
-from typing import Dict, Any, Optional
+from typing import List, Any, Dict
 
-def handle_graphql_request(query: str, variables: Optional[Dict] = None) -> Any:
+def handle_rpc_request(method: str, params: List[Any], api_key: str) -> Any:
     try:
         response = requests.post(
-            'https://api.solixdb.xyz/graphql',
-            json={'query': query, 'variables': variables or {}}
+            'https://api.solixdb.xyz/api/v1/rpc',
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': api_key
+            },
+            json={
+                'jsonrpc': '2.0',
+                'id': 1,
+                'method': method,
+                'params': params
+            }
         )
         result = response.json()
         
-        if 'errors' in result:
-            for error in result['errors']:
-                code = error.get('extensions', {}).get('code')
-                
-                if code == 'COMPLEXITY_EXCEEDED':
-                    print('Query too complex:', error['extensions'].get('recommendations'))
-                elif code == 'PAGINATION_REQUIRED':
-                    print('Pagination required for large result sets')
-                elif code == 'RATE_LIMIT_EXCEEDED':
-                    retry_after = error['extensions'].get('retryAfter')
-                    print(f'Rate limited. Retry after {retry_after}s')
-                elif code == 'VALIDATION_ERROR':
-                    print('Validation error:', error['extensions'].get('field'))
-                else:
-                    print('GraphQL error:', error['message'])
+        if 'error' in result:
+            error = result['error']
+            code = error.get('code')
+            message = error.get('message')
+            data = error.get('data')
             
-            raise Exception(result['errors'][0]['message'])
+            if code == -32600:
+                print('Invalid request:', message)
+            elif code == -32601:
+                print('Method not found:', method)
+            elif code == -32602:
+                print('Invalid params:', data)
+            elif code == -32000:
+                if 'Rate limit' in message:
+                    print('Rate limit exceeded:', data)
+                else:
+                    print('Server error:', message)
+            else:
+                print('RPC error:', message)
+            
+            raise Exception(message)
         
-        return result.get('data')
+        return result.get('result')
     except requests.exceptions.RequestException as e:
         print(f'Request failed: {e}')
         raise
@@ -479,16 +478,27 @@ Implement retry logic for transient errors (500, 503, 429):
 ```typescript
 async function retryRequest(
   url: string,
-  options: RequestInit,
+  apiKey: string,
+  body: any,
   maxRetries = 3
 ): Promise<Response> {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify(body)
+      });
       
       if (response.status === 429) {
-        const resetTime = response.headers.get('X-RateLimit-Reset');
-        const waitTime = Math.pow(2, i) * 1000;
+        const error = await response.json();
+        const retryAfter = error.retryAfter || response.headers.get('Retry-After');
+        const waitTime = retryAfter 
+          ? parseInt(retryAfter) * 1000 
+          : Math.pow(2, i) * 1000;
         await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
       }
@@ -511,31 +521,39 @@ async function retryRequest(
 }
 ```
 
-### GraphQL
+### JSON-RPC
 
 ```typescript
-async function retryGraphQLRequest(
-  query: string,
-  variables?: any,
+async function retryRPCRequest(
+  method: string,
+  params: any[],
+  apiKey: string,
   maxRetries = 3
 ): Promise<any> {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch('https://api.solixdb.xyz/graphql', {
+      const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, variables }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method,
+          params
+        })
       });
       
       const result = await response.json();
       
-      if (result.errors) {
-        const error = result.errors[0];
-        const code = error.extensions?.code;
+      if (result.error) {
+        const error = result.error;
         
-        if (code === 'RATE_LIMIT_EXCEEDED') {
-          const retryAfter = error.extensions.retryAfter || Math.pow(2, i);
-          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+        if (error.message.includes('Rate limit')) {
+          const retryAfter = error.data?.match(/Retry after (\d+)/)?.[1] || Math.pow(2, i);
+          await new Promise(resolve => setTimeout(resolve, parseInt(retryAfter) * 1000));
           continue;
         }
         
@@ -547,11 +565,11 @@ async function retryGraphQLRequest(
         }
       }
       
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
+      if (result.error) {
+        throw new Error(result.error.message);
       }
       
-      return result.data;
+      return result.result;
     } catch (error) {
       if (i === maxRetries - 1) throw error;
       await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
@@ -566,19 +584,22 @@ async function retryGraphQLRequest(
 
 <AccordionGroup>
   <Accordion title="Check for errors first" icon="triangle-exclamation">
-    Always check for errors in GraphQL responses before accessing data.
+    Always check for errors in JSON-RPC responses before accessing result data.
   </Accordion>
   <Accordion title="Handle specific error codes" icon="code">
-    Handle specific error codes (COMPLEXITY_EXCEEDED, PAGINATION_REQUIRED) with appropriate actions.
+    Handle specific error codes (-32600, -32601, -32602, -32000) with appropriate actions.
   </Accordion>
   <Accordion title="Implement retry logic" icon="arrow-rotate-right">
     Retry transient errors (500, 503, 429) with exponential backoff.
   </Accordion>
   <Accordion title="Log error details" icon="file-lines">
-    Log error details for debugging, including error codes and extensions.
+    Log error details for debugging, including error codes and data fields.
   </Accordion>
   <Accordion title="Provide user-friendly messages" icon="user">
     Translate technical error messages to user-friendly messages in your UI.
+  </Accordion>
+  <Accordion title="Respect rate limits" icon="clock">
+    Monitor rate limit headers and implement backoff when approaching limits.
   </Accordion>
 </AccordionGroup>
 
@@ -587,5 +608,5 @@ async function retryGraphQLRequest(
 </Tip>
 
 <Tip>
-  For GraphQL query examples, see our [GraphQL API Reference](/api-reference/graphql-api).
+  For API method examples, see our [JSON-RPC API Reference](/api-reference/json-rpc-api).
 </Tip>

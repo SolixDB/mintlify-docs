@@ -35,16 +35,17 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "GraphQL API",
+            "group": "JSON-RPC API",
             "pages": [
-              "api-reference/graphql-api",
-              "api-reference/migration-guide"
+              "api-reference/json-rpc-api",
+              "api-reference/rpc-methods"
             ]
           },
           {
-            "group": "REST API (Legacy)",
+            "group": "REST API",
             "pages": [
-              "api-reference/rest-api"
+              "api-reference/rest-api",
+              "api-reference/sql-query"
             ]
           }
         ]

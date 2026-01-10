@@ -1,15 +1,9 @@
 ---
-title: "REST API Reference (Legacy)"
-description: "Legacy REST API endpoints - Consider migrating to GraphQL for better flexibility"
+title: "REST API Reference"
+description: "REST API endpoints for SQL queries and health checks"
 ---
 
-<Warning>
-  **Legacy API:** The REST API is maintained for backward compatibility. For new projects, we strongly recommend using the [GraphQL API](/api-reference/graphql-api) which provides more flexibility, better performance, and advanced features like aggregations, grouping, and ML dataset export.
-  
-  See our [Migration Guide](/api-reference/migration-guide) for help migrating from REST to GraphQL.
-</Warning>
-
-The REST API provides standardized endpoints for querying Solana transaction data. While still functional, the GraphQL API offers superior flexibility and performance.
+The REST API provides endpoints for SQL query execution and system health checks. For method-based transaction queries, use the [JSON-RPC API](/api-reference/json-rpc-api).
 
 ## Base URL
 
@@ -17,385 +11,255 @@ The REST API provides standardized endpoints for querying Solana transaction dat
 https://api.solixdb.xyz/api/v1
 ```
 
+## Authentication
+
+All API endpoints require an API key. Include it in the `x-api-key` header or as an `api-key` query parameter.
+
+<Info>
+  For details on authentication, see our [Authentication](/authentication) guide.
+</Info>
+
 ## Endpoints
 
-### Get Transactions
+### SQL Query
 
-Retrieve a list of transactions with optional filters.
-
-**Endpoint:** `GET /transactions`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `protocol_name` | string | No | Filter by protocol (jupiter_v4, jupiter_v6, raydium_amm_v3, etc.) |
-| `program_id` | string | No | Filter by Solana program ID |
-| `date_from` | string | No | Start date (YYYY-MM-DD) |
-| `date_to` | string | No | End date (YYYY-MM-DD) |
-| `signature` | string | No | Filter by transaction signature |
-| `limit` | integer | No | Number of results (1-1000, default: 100) |
-| `offset` | integer | No | Number of results to skip (default: 0) |
-
-<Info>
-  **GraphQL Equivalent:** Use the `transactions` query with `TransactionFilters` and `PaginationInput`. See [GraphQL API Reference](/api-reference/graphql-api#transactions).
-</Info>
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions?protocol_name=jupiter_v6&date_from=2025-07-20&limit=100" \
-```
-
-```json Response
-{
-  "data": [
-    {
-      "signature": "5KJp...",
-      "slot": 123456789,
-      "blockTime": 1721491200,
-      "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-      "protocolName": "jupiter_v6",
-      "instructionType": "swap",
-      "fee": 5000,
-      "computeUnits": 200000,
-      "accountsCount": 10,
-      "date": "2025-07-20",
-      "hour": 12
-    }
-  ],
-  "count": 100,
-  "limit": 100,
-  "offset": 0
-}
-```
-</CodeGroup>
-
-### Get Transaction by Signature
-
-Retrieve a specific transaction by its signature.
-
-**Endpoint:** `GET /transactions/:signature`
-
-**Path Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `signature` | string | Yes | Transaction signature |
-
-<Info>
-  **GraphQL Equivalent:** Use the `signature` query. See [GraphQL API Reference](/api-reference/graphql-api#signature).
-</Info>
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/transactions/5KJp..." \
-```
-
-```json Response
-{
-  "data": {
-    "signature": "5KJp...",
-    "slot": 123456789,
-    "blockTime": 1721491200,
-    "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-    "protocolName": "jupiter_v6",
-    "instructionType": "swap",
-    "fee": 5000,
-    "computeUnits": 200000,
-    "accountsCount": 10,
-    "date": "2025-07-20",
-    "hour": 12
-  }
-}
-```
-</CodeGroup>
-
-### Get Protocol Analytics
-
-Get aggregated analytics for a specific protocol.
-
-**Endpoint:** `GET /analytics/protocols`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `protocol_name` | string | Yes | Protocol name |
-| `date_from` | string | No | Start date (YYYY-MM-DD) |
-| `date_to` | string | No | End date (YYYY-MM-DD) |
-
-<Info>
-  **GraphQL Equivalent:** Use the `protocolStats` query. See [GraphQL API Reference](/api-reference/graphql-api#protocolstats).
-</Info>
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/protocols?protocol_name=jupiter_v6&date_from=2025-07-20" \
-```
-
-```json Response
-{
-  "data": {
-    "protocolName": "jupiter_v6",
-    "totalTransactions": 1500000,
-    "totalFees": 7500000000,
-    "totalComputeUnits": 300000000000,
-    "averageFee": 5000,
-    "averageComputeUnits": 200000,
-    "uniquePrograms": 5,
-    "dateFrom": "2025-07-20",
-    "dateTo": null
-  }
-}
-```
-</CodeGroup>
-
-### Get Time Series Data
-
-Get time series data for transactions.
-
-**Endpoint:** `GET /analytics/time-series`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `protocol_name` | string | No | Filter by protocol |
-| `date_from` | string | Yes | Start date (YYYY-MM-DD) |
-| `date_to` | string | Yes | End date (YYYY-MM-DD) |
-| `granularity` | string | No | Time granularity: `hour` or `day` (default: `hour`) |
-
-<Info>
-  **GraphQL Equivalent:** Use the `timeSeries` query with `TimeBucket`. See [GraphQL API Reference](/api-reference/graphql-api#timeseries).
-</Info>
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/time-series?protocol_name=jupiter_v6&date_from=2025-07-20&date_to=2025-07-21&granularity=hour" \
-```
-
-```json Response
-{
-  "data": [
-    {
-      "timestamp": "2025-07-20T00:00:00Z",
-      "value": 50000
-    },
-    {
-      "timestamp": "2025-07-20T01:00:00Z",
-      "value": 52000
-    }
-  ]
-}
-```
-</CodeGroup>
-
-### Get Fee Analytics
-
-Get fee statistics and analytics.
-
-**Endpoint:** `GET /analytics/fees`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `protocol_name` | string | No | Filter by protocol |
-| `date_from` | string | No | Start date (YYYY-MM-DD) |
-| `date_to` | string | No | End date (YYYY-MM-DD) |
-
-<Info>
-  **GraphQL Equivalent:** Use the `transactions` query with `groupBy` and aggregation `metrics` like `AVG_FEE`, `P95_FEE`, `P99_FEE`. See [GraphQL API Reference](/api-reference/graphql-api#transactions).
-</Info>
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/analytics/fees?protocol_name=jupiter_v6" \
-```
-
-```json Response
-{
-  "data": {
-    "minFee": 1000,
-    "maxFee": 10000,
-    "avgFee": 5000,
-    "medianFee": 4800,
-    "p95Fee": 8500,
-    "p99Fee": 9500,
-    "totalFees": 7500000000
-  }
-}
-```
-</CodeGroup>
-
-### Get Global Stats
-
-Get global statistics about the database.
-
-**Endpoint:** `GET /stats`
-
-<CodeGroup>
-```bash
-curl -X GET "https://api.solixdb.xyz/api/v1/stats" \
-```
-
-```json Response
-{
-  "data": {
-    "totalTransactions": 389000000,
-    "totalFailedTransactions": 14000000,
-    "dateRange": {
-      "from": "2025-07-03",
-      "to": "2025-08-02"
-    },
-    "protocols": [
-      {
-        "name": "jupiter_v6",
-        "count": 150000000
-      },
-      {
-        "name": "jupiter_v4",
-        "count": 100000000
-      }
-    ]
-  }
-}
-```
-</CodeGroup>
-
-### Execute SQL Query (Legacy)
-
-Execute read-only SQL queries directly against the ClickHouse database. This endpoint allows you to write custom SELECT queries for maximum flexibility.
+Execute read-only SQL SELECT queries against ClickHouse.
 
 **Endpoint:** `POST /query`
 
-<Info>
-  This endpoint is still available and maintained. For most use cases, the GraphQL API provides better type safety and performance. Use SQL queries only when you need custom logic not available in GraphQL.
-</Info>
-
 **Request Body:**
+
+```json
+{
+  "query": "SELECT * FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10",
+  "format": "json"
+}
+```
+
+**Parameters:**
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `query` | string | Yes | SQL SELECT query (must include LIMIT) |
-| `format` | string | No | Response format: `json` or `csv` (default: `json`) |
+| `query` | string | Yes | SQL SELECT query (read-only) |
+| `format` | string | No | Response format: `"json"` (default) or `"csv"` |
 
-<Warning>
-  **Safety Restrictions:**
-  - Only SELECT queries are allowed (no DROP, DELETE, UPDATE, INSERT, etc.)
-  - Query must include a LIMIT clause
-  - Maximum LIMIT value: 10,000 rows
-  - Maximum query length: 100,000 characters
-  - Query timeout: 30 seconds
-  - Only single statements allowed (no semicolons)
-</Warning>
-
-<CodeGroup>
-```bash JSON Response
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "SELECT signature, protocol_name, fee, compute_units FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' AND date >= '\''2025-07-20'\'' LIMIT 100"
-  }'
-```
-
-```bash CSV Response
-curl -X POST "https://api.solixdb.xyz/api/v1/query" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "SELECT protocol_name, count() as total FROM transactions GROUP BY protocol_name ORDER BY total DESC LIMIT 10",
-    "format": "csv"
-  }'
-```
-</CodeGroup>
-
-**Example Response (JSON):**
+**Response (JSON):**
 
 ```json
 {
   "data": [
     {
-      "signature": "5KJp...",
+      "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
       "protocol_name": "jupiter_v6",
-      "fee": 5000,
-      "compute_units": 200000
+      "fee": "5000"
     }
   ],
-  "count": 100,
-  "query": "SELECT signature, protocol_name, fee, compute_units FROM transactions WHERE protocol_name = 'jupiter_v6' AND date >= '2025-07-20' LIMIT 100"
+  "count": 10,
+  "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10"
 }
 ```
 
-**Example Response (CSV):**
+**Response (CSV):**
 
-```
-protocol_name,total
-jupiter_v6,150000000
-jupiter_v4,100000000
-raydium_amm_v3,50000000
+```csv
+signature,protocol_name,fee
+5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7,jupiter_v6,5000
 ```
 
-**Error Responses:**
+<Info>
+  **Automatic LIMIT:** If your query doesn't include a LIMIT clause, a default LIMIT of 1000 is automatically added. Maximum allowed LIMIT is 10,000.
+</Info>
 
-```json
-{
-  "error": "Invalid query",
-  "message": "Query must include a LIMIT clause. Maximum allowed: LIMIT 10000"
-}
+**Example:**
+
+<CodeGroup>
+```bash curl
+curl -X POST "https://api.solixdb.xyz/api/v1/query" \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -d '{
+    "query": "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = '\''jupiter_v6'\'' LIMIT 10",
+    "format": "json"
+  }'
 ```
 
-```json
-{
-  "error": "Invalid query",
-  "message": "Destructive operation 'DROP' is not allowed. Only read-only queries are permitted."
-}
+```javascript JavaScript
+const response = await fetch('https://api.solixdb.xyz/api/v1/query', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'YOUR_API_KEY'
+  },
+  body: JSON.stringify({
+    query: "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10",
+    format: 'json'
+  })
+});
+
+const data = await response.json();
+console.log(data.data);
 ```
 
-## Response Format
+```python Python
+import requests
 
-All successful responses follow this format:
+response = requests.post(
+    'https://api.solixdb.xyz/api/v1/query',
+    headers={
+        'Content-Type': 'application/json',
+        'x-api-key': 'YOUR_API_KEY'
+    },
+    json={
+        'query': "SELECT signature, protocol_name, fee FROM transactions WHERE protocol_name = 'jupiter_v6' LIMIT 10",
+        'format': 'json'
+    }
+)
 
-```json
-{
-  "data": { ... },
-  "count": 100,
-  "limit": 100,
-  "offset": 0
-}
+data = response.json()
+print(data['data'])
 ```
-
-## Health & Monitoring Endpoints
+</CodeGroup>
 
 ### Health Check
 
+Check API and service health status.
+
 **Endpoint:** `GET /health`
 
-Check API health status.
+**Note:** This endpoint does not require authentication.
 
-```bash
-curl -X GET "https://api.solixdb.xyz/health"
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-20T10:00:00.000Z",
+  "version": "1.0.0",
+  "uptime": 12345,
+  "environment": "production",
+  "services": {
+    "clickhouse": "up",
+    "redis": "up"
+  }
+}
 ```
 
-### Prometheus Metrics
-
-**Endpoint:** `GET /metrics`
-
-Get Prometheus metrics for monitoring.
+**Example:**
 
 ```bash
-curl -X GET "https://api.solixdb.xyz/metrics"
+curl "https://api.solixdb.xyz/health"
 ```
 
-### Query Pattern Analysis
+## Query Restrictions
 
-**Endpoint:** `GET /admin/suggest-materialized-views`
+For security, only read-only queries are allowed:
 
-Analyze query patterns for optimization suggestions (admin only).
+### Allowed Operations
 
-<Tip>
-  For detailed error handling information, see our [Error Handling](/error-handling) guide.
-</Tip>
+- `SELECT` statements
+- `WITH` (CTEs - Common Table Expressions)
+- `JOIN` operations
+- Aggregations (`COUNT`, `SUM`, `AVG`, etc.)
+- `GROUP BY`, `ORDER BY`, `HAVING`
+- `LIMIT`, `OFFSET`
+- Subqueries
 
-<Tip>
-  **Migrating to GraphQL?** See our [Migration Guide](/api-reference/migration-guide) for step-by-step instructions on converting REST API calls to GraphQL queries.
-</Tip>
+### Blocked Operations
+
+The following operations are **not allowed**:
+
+- `INSERT`, `UPDATE`, `DELETE`
+- `DROP`, `CREATE`, `ALTER`
+- `TRUNCATE`, `REPLACE`
+- `GRANT`, `REVOKE`
+- `KILL`, `OPTIMIZE`
+- Multiple statements (semicolons)
+
+## Error Responses
+
+### Invalid Query
+
+```json
+{
+  "error": "Invalid query",
+  "message": "Only SELECT queries are allowed"
+}
+```
+
+**Status Code:** `400 Bad Request`
+
+### Missing API Key
+
+```json
+{
+  "error": "Unauthorized",
+  "message": "API key is required. Provide it via x-api-key header or api-key query parameter."
+}
+```
+
+**Status Code:** `401 Unauthorized`
+
+### Rate Limit Exceeded
+
+```json
+{
+  "error": "Too Many Requests",
+  "message": "Rate limit exceeded for plan 'free'. Limit: 100 requests/minute, Used: 100. Retry after 60 seconds.",
+  "plan": "free",
+  "limit": 100,
+  "used": 100,
+  "retryAfter": 60
+}
+```
+
+**Status Code:** `429 Too Many Requests`
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Use appropriate LIMIT" icon="list">
+    Specify a reasonable LIMIT for your use case. The default is 1000, but you can go up to 10,000.
+  </Accordion>
+  <Accordion title="Filter early" icon="filter">
+    Use WHERE clauses to filter data early in the query to reduce processing time.
+  </Accordion>
+  <Accordion title="Use indexes" icon="database">
+    Filter by indexed columns (date, protocol_name, program_id) for better performance.
+  </Accordion>
+  <Accordion title="Avoid SELECT *" icon="eye-slash">
+    Select only the columns you need to reduce response size and improve performance.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="JSON-RPC API"
+    icon="code"
+    href="/api-reference/json-rpc-api"
+  >
+    Method-based API for transaction queries.
+  </Card>
+  <Card
+    title="SQL Query API"
+    icon="database"
+    href="/api-reference/sql-query"
+  >
+    Detailed SQL query documentation.
+  </Card>
+  <Card
+    title="Examples"
+    icon="book"
+    href="/examples"
+  >
+    Real-world examples and use cases.
+  </Card>
+  <Card
+    title="Authentication"
+    icon="key"
+    href="/authentication"
+  >
+    Learn about API key authentication.
+  </Card>
+</CardGroup>
