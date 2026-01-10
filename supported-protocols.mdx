@@ -36,22 +36,16 @@ These protocols are currently indexed and available for querying:
   </Card>
 </CardGroup>
 
-## Protocol Details
+## Protocol Reference
 
-### Drift V2
+### Active Protocols
+
+#### Drift V2
 
 **Protocol Name:** `drift_v2`  
 **Program ID:** `dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH`
 
 Drift Protocol is a decentralized perpetual futures exchange on Solana.
-
-**Common Instruction Types:**
-- `Deposit`
-- `Withdraw`
-- `PlaceOrder`
-- `CancelOrder`
-- `Liquidate`
-- `SettlePnl`
 
 **Example Query:**
 
@@ -63,7 +57,6 @@ Drift Protocol is a decentralized perpetual futures exchange on Solana.
   "params": [{
     "filters": {
       "protocols": ["drift_v2"],
-      "instructionTypes": ["Deposit", "Withdraw"],
       "status": "succeeded"
     },
     "limit": 100
@@ -71,63 +64,60 @@ Drift Protocol is a decentralized perpetual futures exchange on Solana.
 }
 ```
 
-**Get Protocol Stats:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "getProtocolStats",
-  "params": [{
-    "protocolName": "drift_v2",
-    "blockTime": {
-      "gte": 1735689600,
-      "lte": 1738368000
-    }
-  }]
-}
-```
-
-### Kamino Farms
+#### Kamino Farms
 
 **Protocol Name:** `kamino_farms`  
 **Program ID:** `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr`
 
 Kamino Farms provides yield farming opportunities on Solana.
 
-**Common Instruction Types:**
-- `Deposit`
-- `Withdraw`
-- `Harvest`
-- `Compound`
-
 **Example Query:**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "getInstructionTypes",
+  "method": "getTransactions",
   "params": [{
-    "protocolName": "kamino_farms",
-    "limit": 20
+    "filters": {
+      "protocols": ["kamino_farms"],
+      "status": "succeeded"
+    },
+    "limit": 100
   }]
 }
 ```
 
-### Kamino Lending
+#### Kamino Lending
 
 **Protocol Name:** `kamino_lending`  
 **Program ID:** `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD`
 
 Kamino Lending is a lending and borrowing protocol.
 
-**Common Instruction Types:**
-- `Deposit`
-- `Withdraw`
-- `Borrow`
-- `Repay`
-- `Liquidate`
+**Example Query:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["kamino_lending"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+#### Kamino Lending Vault
+
+**Protocol Name:** `kamino_lending_vault`  
+**Program ID:** `KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd`
+
+Vault-based lending products from Kamino.
 
 **Example Query:**
 
@@ -135,93 +125,196 @@ Kamino Lending is a lending and borrowing protocol.
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "getProtocolActivity",
+  "method": "getTransactions",
   "params": [{
-    "protocolName": "kamino_lending",
-    "blockTime": {
-      "gte": 1735689600,
-      "lte": 1738368000
+    "filters": {
+      "protocols": ["kamino_lending_vault"],
+      "status": "succeeded"
     },
-    "interval": "day"
+    "limit": 100
   }]
 }
 ```
 
-### Kamino Lending Vault
-
-**Protocol Name:** `kamino_lending_vault`  
-**Program ID:** `KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd`
-
-Vault-based lending products from Kamino.
-
-**Common Instruction Types:**
-- `Deposit`
-- `Withdraw`
-- `Claim`
-
-### Kamino Limo
+#### Kamino Limo
 
 **Protocol Name:** `kamino_limo`  
 **Program ID:** `LiMoM9rMhrdYrfzUCxQppvxCSG1FcrUK9G8uLq4A1GF`
 
 Liquidity management protocol.
 
-**Common Instruction Types:**
-- `AddLiquidity`
-- `RemoveLiquidity`
-- `Swap`
+**Example Query:**
 
-### Meteora DLMM
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["kamino_limo"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+#### Meteora DLMM
 
 **Protocol Name:** `meteora_dlmm`  
 **Program ID:** `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo`
 
 Dynamic Liquidity Market Maker from Meteora.
 
-**Common Instruction Types:**
-- `Swap`
-- `AddLiquidity`
-- `RemoveLiquidity`
+**Example Query:**
 
-### Meteora DAMM V2
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["meteora_dlmm"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+#### Meteora DAMM V2
 
 **Protocol Name:** `meteora_damm_v2`  
 **Program ID:** `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG`
 
 Dynamic AMM V2 from Meteora.
 
-**Common Instruction Types:**
-- `Swap`
-- `AddLiquidity`
-- `RemoveLiquidity`
+**Example Query:**
 
-### Meteora Dynamic Bonding Curve
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["meteora_damm_v2"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+#### Meteora Dynamic Bonding Curve
 
 **Protocol Name:** `meteora_dynamic_bonding_curve`  
 **Program ID:** `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`
 
 Dynamic bonding curve AMM from Meteora.
 
-**Common Instruction Types:**
-- `Swap`
-- `CreatePool`
-- `UpdateCurve`
+**Example Query:**
 
-## Additional Protocols (Available on Request)
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTransactions",
+  "params": [{
+    "filters": {
+      "protocols": ["meteora_dynamic_bonding_curve"],
+      "status": "succeeded"
+    },
+    "limit": 100
+  }]
+}
+```
+
+### Additional Protocols (Available on Request)
 
 These protocols can be enabled for your account:
 
-- **Jupiter V4** - `jupiter_v4` - Jupiter Aggregator V4
-- **Jupiter V6** - `jupiter_v6` - Jupiter Aggregator V6
-- **Raydium AMM V3** - `raydium_amm_v3` - Raydium AMM V3
-- **Raydium CPMM** - `raydium_cpmm` - Raydium Constant Product Market Maker
-- **Pump.fun** - `pump_fun` - Token launch platform
-- **Pump AMM** - `pump_amm` - Pump AMM
-- **Orca Whirlpool** - `orca_whirlpool` - Orca Whirlpool DEX
+#### Jupiter V6
 
-<Card title="Request Additional Protocols" icon="envelope" href="mailto:support@solixdb.xyz?subject=Protocol Request">
+**Protocol Name:** `jupiter_v6`  
+**Program ID:** `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4`
+
+Jupiter Aggregator V6 - DEX aggregator for finding the best swap routes.
+
+#### Jupiter V4
+
+**Protocol Name:** `jupiter_v4`  
+**Program ID:** `JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB`
+
+Jupiter Aggregator V4 - Previous version of Jupiter aggregator.
+
+#### Pump AMM
+
+**Protocol Name:** `pump_amm`  
+**Program ID:** `pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA`
+
+Pump AMM - Automated market maker for token trading.
+
+#### Pump.fun
+
+**Protocol Name:** `pump_fun`  
+**Program ID:** `6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P`
+
+Pump.fun - Token launch platform.
+
+#### Raydium AMM V3
+
+**Protocol Name:** `raydium_amm_v3`  
+**Program ID:** `CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK`
+
+Raydium AMM V3 - Automated market maker from Raydium.
+
+#### Raydium CP Swap
+
+**Protocol Name:** `raydium_cp_swap`  
+**Program ID:** `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C`
+
+Raydium CP Swap - Constant product market maker swap protocol.
+
+#### Orca Whirlpool
+
+**Protocol Name:** `whirlpool`  
+**Program ID:** `whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc`
+
+Orca Whirlpool - Concentrated liquidity DEX from Orca.
+
+<Card title="Request Additional Protocols" icon="envelope" href="mailto:solixdb.xyz@gmail.com">
   Need access to additional protocols? Contact us to enable them for your account.
 </Card>
+
+## Complete Protocol List
+
+### Active Protocols (8)
+
+| Protocol Name | Program ID | Status |
+|--------------|------------|--------|
+| `drift_v2` | `dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH` | Active |
+| `kamino_farms` | `FarmsPZpWu9i7Kky8tPN37rs2TpmMrAZrC7S7vJa91Hr` | Active |
+| `kamino_lending` | `KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD` | Active |
+| `kamino_lending_vault` | `KvauGMspG5k6rtzrqqn7WNn3oZdyKqLKwK2XWQ8FLjd` | Active |
+| `kamino_limo` | `LiMoM9rMhrdYrfzUCxQppvxCSG1FcrUK9G8uLq4A1GF` | Active |
+| `meteora_dlmm` | `LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo` | Active |
+| `meteora_damm_v2` | `cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG` | Active |
+| `meteora_dynamic_bonding_curve` | `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN` | Active |
+
+### Additional Protocols (7)
+
+| Protocol Name | Program ID | Status |
+|--------------|------------|--------|
+| `jupiter_v6` | `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4` | Available on Request |
+| `jupiter_v4` | `JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB` | Available on Request |
+| `pump_amm` | `pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA` | Available on Request |
+| `pump_fun` | `6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P` | Available on Request |
+| `raydium_amm_v3` | `CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK` | Available on Request |
+| `raydium_cp_swap` | `CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C` | Available on Request |
+| `whirlpool` | `whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc` | Available on Request |
 
 ## How to Query Protocols
 

@@ -27,7 +27,8 @@
               "examples",
               "error-handling",
               "rate-limiting",
-              "supported-protocols"
+              "supported-protocols",
+              "faqs"
             ]
           },
           {
@@ -63,7 +64,6 @@
           {
             "group": "Help & Support",
             "pages": [
-              "faqs",
               "support"
             ]
           }
