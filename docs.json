@@ -7,78 +7,65 @@
     "light": "#4E89FF",
     "dark": "#0A4FCC"
   },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Guides",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "getting-started",
-              "authentication"
-            ]
-          },
-          {
-            "group": "API Usage",
-            "pages": [
-              "examples",
-              "error-handling",
-              "rate-limiting",
-              "supported-protocols",
-              "faqs"
-            ]
-          },
-          {
-            "group": "Services",
-            "pages": [
-              "managed-backfill"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API Reference",
-        "groups": [
-          {
-            "group": "JSON-RPC API",
-            "pages": [
-              "api-reference/json-rpc-api",
-              "api-reference/rpc-methods"
-            ]
-          },
-          {
-            "group": "REST API",
-            "pages": [
-              "api-reference/rest-api",
-              "api-reference/sql-query"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Resources",
-        "groups": [
-          {
-            "group": "Help & Support",
-            "pages": [
-              "support"
-            ]
-          }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "GitHub",
-          "href": "https://github.com/SolixDB",
-          "icon": "github"
-        }
+  "favicon": "/favicon.png",
+  "search": {
+    "enabled": true,
+    "shortcut": "cmd+k"
+  },
+  "navigation": [
+    {
+      "group": "Getting started",
+      "pages": [
+        "index",
+        "getting-started",
+        "authentication"
+      ]
+    },
+    {
+      "group": "API Usage",
+      "pages": [
+        "examples",
+        "error-handling",
+        "rate-limiting",
+        "supported-protocols",
+        "faqs"
+      ]
+    },
+    {
+      "group": "Services",
+      "pages": [
+        "managed-backfill"
+      ]
+    },
+    {
+      "group": "JSON-RPC API",
+      "pages": [
+        "api-reference/json-rpc-api",
+        "api-reference/rpc-methods"
+      ]
+    },
+    {
+      "group": "REST API",
+      "pages": [
+        "api-reference/rest-api",
+        "api-reference/sql-query"
+      ]
+    },
+    {
+      "group": "Help & Support",
+      "pages": [
+        "support"
       ]
     }
+  ],
+  "global": {
+    "anchors": [
+      {
+        "anchor": "GitHub",
+        "href": "https://github.com/SolixDB",
+        "icon": "github"
+      }
+    ]
   },
   "logo": {
     "light": "/logo/logo.png",
