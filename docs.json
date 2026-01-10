@@ -12,52 +12,54 @@
     "enabled": true,
     "shortcut": "cmd+k"
   },
-  "navigation": [
-    {
-      "group": "Getting started",
-      "pages": [
-        "index",
-        "getting-started",
-        "authentication"
-      ]
-    },
-    {
-      "group": "API Usage",
-      "pages": [
-        "examples",
-        "error-handling",
-        "rate-limiting",
-        "supported-protocols",
-        "faqs"
-      ]
-    },
-    {
-      "group": "Services",
-      "pages": [
-        "managed-backfill"
-      ]
-    },
-    {
-      "group": "JSON-RPC API",
-      "pages": [
-        "api-reference/json-rpc-api",
-        "api-reference/rpc-methods"
-      ]
-    },
-    {
-      "group": "REST API",
-      "pages": [
-        "api-reference/rest-api",
-        "api-reference/sql-query"
-      ]
-    },
-    {
-      "group": "Help & Support",
-      "pages": [
-        "support"
-      ]
-    }
-  ],
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting started",
+        "pages": [
+          "index",
+          "getting-started",
+          "authentication"
+        ]
+      },
+      {
+        "group": "API Usage",
+        "pages": [
+          "examples",
+          "error-handling",
+          "rate-limiting",
+          "supported-protocols",
+          "faqs"
+        ]
+      },
+      {
+        "group": "Services",
+        "pages": [
+          "managed-backfill"
+        ]
+      },
+      {
+        "group": "JSON-RPC API",
+        "pages": [
+          "api-reference/json-rpc-api",
+          "api-reference/rpc-methods"
+        ]
+      },
+      {
+        "group": "REST API",
+        "pages": [
+          "api-reference/rest-api",
+          "api-reference/sql-query"
+        ]
+      },
+      {
+        "group": "Help & Support",
+        "pages": [
+          "support"
+        ]
+      }
+    ]
+  },
   "global": {
     "anchors": [
       {
