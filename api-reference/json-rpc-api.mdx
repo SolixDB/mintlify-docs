@@ -8,10 +8,10 @@ The JSON-RPC API provides method-based access to Solana transaction data followi
 ## Endpoint
 
 ```
-POST /api/v1/rpc
+POST /v1/rpc
 ```
 
-**Base URL:** `https://api.solixdb.xyz/api/v1/rpc`
+**Base URL:** `https://api.solixdb.xyz/v1/rpc`
 
 ## Authentication
 
@@ -81,9 +81,27 @@ All requests follow the JSON-RPC 2.0 specification:
 
 ## Available Methods
 
-### getTransactionsForAddress
+SolixDB provides analytics-focused JSON-RPC methods designed for DeFi transaction analysis:
 
-Get transactions for a specific Solana address.
+### Core Methods
+
+- `getTransaction` - Get a single transaction by signature
+- `getTransactions` - Get transactions with filters (protocol, instruction type, time range, etc.)
+
+### Analytics Methods
+
+- `getProtocolStats` - Get comprehensive statistics for a protocol
+- `getProtocolComparison` - Compare multiple protocols side by side
+- `getProtocolPerformance` - Get performance metrics (percentiles, averages)
+- `getTopProtocols` - Get top protocols by transaction count, fees, or success rate
+- `getProtocolActivity` - Get time-series activity data (hourly/daily)
+- `getInstructionTypes` - Get instruction types with statistics for protocols
+- `getFailedTransactions` - Get failed transactions with error details
+- `getProtocols` - Get list of all available protocols
+
+### getTransaction
+
+Get a specific transaction by signature.
 
 **Parameters:**
 1. `address` (string, required): Solana address to query
@@ -207,6 +225,7 @@ Get transactions with filters (general method).
      - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
      - `protocols` (array): Array of protocol names
      - `programIds` (array): Array of program IDs
+     - `instructionTypes` (array): Array of instruction types
      - `signatures` (array): Array of transaction signatures
 
 **Example:**
@@ -225,7 +244,8 @@ Get transactions with filters (general method).
         "lte": 1738368000
       },
       "status": "succeeded",
-      "protocols": ["jupiter_v6", "pump_fun"]
+      "protocols": ["drift_v2", "kamino_lending"],
+      "instructionTypes": ["Deposit", "Withdraw"]
     }
   }]
 }
@@ -275,20 +295,33 @@ All transaction objects contain the following fields:
 
 ## Supported Protocols
 
+### Active Protocols
+
+- `drift_v2` - Drift Protocol V2
+- `kamino_farms` - Kamino Farms
+- `kamino_lending` - Kamino Lending
+- `kamino_lending_vault` - Kamino Lending Vault
+- `kamino_limo` - Kamino Limo
+- `meteora_dlmm` - Meteora DLMM
+- `meteora_damm_v2` - Meteora DAMM V2
+- `meteora_dynamic_bonding_curve` - Meteora Dynamic Bonding Curve
+
+### Additional Protocols (Available on Request)
+
 - `jupiter_v4` - Jupiter Aggregator V4
 - `jupiter_v6` - Jupiter Aggregator V6
 - `raydium_amm_v3` - Raydium AMM V3
-- `raydium_cp_swap` - Raydium CP Swap
+- `raydium_cpmm` - Raydium CPMM
 - `pump_fun` - Pump.fun
 - `pump_amm` - Pump AMM
-- `whirlpool` - Orca Whirlpool
+- `orca_whirlpool` - Orca Whirlpool
 
 ## Code Examples
 
 <CodeGroup>
 ```javascript JavaScript
-// Get transactions for an address
-const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
+// Get protocol statistics
+const response = await fetch('https://api.solixdb.xyz/v1/rpc', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
@@ -297,34 +330,26 @@ const response = await fetch('https://api.solixdb.xyz/api/v1/rpc', {
   body: JSON.stringify({
     jsonrpc: '2.0',
     id: 1,
-    method: 'getTransactionsForAddress',
-    params: [
-      'YOUR_ADDRESS_HERE',
-      {
-        transactionDetails: 'full',
-        sortOrder: 'asc',
-        limit: 100,
-        filters: {
-          blockTime: {
-            gte: 1735689600,
-            lte: 1738368000
-          },
-          status: 'succeeded'
-        }
+    method: 'getProtocolStats',
+    params: [{
+      protocolName: 'drift_v2',
+      blockTime: {
+        gte: 1735689600,
+        lte: 1738368000
       }
-    ]
+    }]
   })
 });
 
 const data = await response.json();
-console.log('Transactions:', data.result.data);
+console.log('Protocol Stats:', data.result);
 ```
 
 ```python Python
 import requests
 
 response = requests.post(
-    'https://api.solixdb.xyz/api/v1/rpc',
+    'https://api.solixdb.xyz/v1/rpc',
     headers={
         'Content-Type': 'application/json',
         'x-api-key': 'YOUR_API_KEY'
@@ -332,27 +357,20 @@ response = requests.post(
     json={
         'jsonrpc': '2.0',
         'id': 1,
-        'method': 'getTransactionsForAddress',
-        'params': [
-            'YOUR_ADDRESS_HERE',
-            {
-                'transactionDetails': 'full',
-                'sortOrder': 'asc',
-                'limit': 100,
-                'filters': {
-                    'blockTime': {
-                        'gte': 1735689600,
-                        'lte': 1738368000
-                    },
-                    'status': 'succeeded'
-                }
+        'method': 'getTopProtocols',
+        'params': [{
+            'limit': 10,
+            'sortBy': 'transactions',
+            'blockTime': {
+                'gte': 1735689600,
+                'lte': 1738368000
             }
-        ]
+        }]
     }
 )
 
 data = response.json()
-print('Transactions:', data['result']['data'])
+print('Top Protocols:', data['result'])
 ```
 </CodeGroup>
 

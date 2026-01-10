@@ -3,116 +3,41 @@ title: "RPC Methods"
 description: "Detailed documentation for all JSON-RPC methods"
 ---
 
-This page provides detailed documentation for all available JSON-RPC methods.
+This page provides detailed documentation for all available JSON-RPC methods in the SolixDB API.
 
-## getTransactionsForAddress
+## Core Methods
 
-Get transactions for a specific Solana address.
+### getTransaction
 
-### Parameters
+Get a single transaction by signature.
 
-1. **address** (string, required)
-   - Solana address to query (Base58 encoded)
-   - Example: `"JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"`
+**Parameters:**
+1. `signature` (string, required): Transaction signature (Base58 encoded)
 
-2. **options** (object, optional)
-   - `transactionDetails` (string): `"full"`, `"signatures"`, or `"none"` (default: `"full"`)
-   - `sortOrder` (string): `"asc"` or `"desc"` (default: `"asc"`)
-   - `limit` (number): Maximum number of results (default: 100, max: 10000)
-   - `filters` (object, optional):
-     - `blockTime` (object): Time range filter
-       - `gte` (number): Greater than or equal (Unix timestamp)
-       - `lte` (number): Less than or equal (Unix timestamp)
-     - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
-     - `protocols` (array): Array of protocol names
-     - `programIds` (array): Array of program IDs
-     - `signatures` (array): Array of transaction signatures
-
-### Example Request
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "getTransactionsForAddress",
-  "params": [
-    "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-    {
-      "transactionDetails": "full",
-      "sortOrder": "asc",
-      "limit": 100,
-      "filters": {
-        "blockTime": {
-          "gte": 1735689600,
-          "lte": 1738368000
-        },
-        "status": "succeeded",
-        "protocols": ["jupiter_v6"]
-      }
-    }
-  ]
-}
-```
-
-### Example Response
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "data": [
-      {
-        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
-        "slot": "123456789",
-        "blockTime": 1735689600,
-        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-        "protocolName": "jupiter_v6",
-        "instructionType": "swap",
-        "fee": 5000,
-        "computeUnits": 200000,
-        "accountsCount": 10,
-        "success": true
-      }
-    ]
-  }
-}
-```
-
-## getTransaction
-
-Get a specific transaction by signature.
-
-### Parameters
-
-1. **signature** (string, required)
-   - Transaction signature (Base58 encoded, 64-90 characters)
-   - Example: `"5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"`
-
-### Example Request
+**Example Request:**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
   "method": "getTransaction",
-  "params": ["5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7"]
+  "params": ["5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4LjF3ZdUi2gEB9M2K3j3gv6q"]
 }
 ```
 
-### Example Response
+**Example Response:**
 
 ```json
 {
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+    "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4LjF3ZdUi2gEB9M2K3j3gv6q",
     "slot": "123456789",
     "blockTime": 1735689600,
-    "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-    "protocolName": "jupiter_v6",
-    "instructionType": "swap",
+    "programId": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+    "protocolName": "drift_v2",
+    "instructionType": "Deposit",
     "fee": 5000,
     "computeUnits": 200000,
     "accountsCount": 10,
@@ -123,13 +48,12 @@ Get a specific transaction by signature.
 
 **Note:** Returns `null` if transaction is not found.
 
-## getTransactions
+### getTransactions
 
-Get transactions with filters (general method).
+Get transactions with filters.
 
-### Parameters
-
-1. **options** (object, optional)
+**Parameters:**
+1. `options` (object, optional):
    - `sortOrder` (string): `"asc"` or `"desc"` (default: `"desc"`)
    - `limit` (number): Maximum number of results (default: 100, max: 10000)
    - `filters` (object, optional):
@@ -139,9 +63,10 @@ Get transactions with filters (general method).
      - `status` (string): `"succeeded"`, `"failed"`, or `"all"` (default: `"all"`)
      - `protocols` (array): Array of protocol names
      - `programIds` (array): Array of program IDs
+     - `instructionTypes` (array): Array of instruction types
      - `signatures` (array): Array of transaction signatures
 
-### Example Request
+**Example Request:**
 
 ```json
 {
@@ -157,13 +82,365 @@ Get transactions with filters (general method).
         "lte": 1738368000
       },
       "status": "succeeded",
-      "protocols": ["jupiter_v6", "pump_fun"]
+      "protocols": ["drift_v2", "kamino_lending"],
+      "instructionTypes": ["Deposit", "Withdraw"]
     }
   }]
 }
 ```
 
-### Example Response
+## Analytics Methods
+
+### getProtocolStats
+
+Get comprehensive statistics for a protocol.
+
+**Parameters:**
+1. `options` (object, required):
+   - `protocolName` (string, required): Protocol name
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolStats",
+  "params": [{
+    "protocolName": "drift_v2",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    }
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolName": "drift_v2",
+    "totalTransactions": 1250000,
+    "successfulTransactions": 1187500,
+    "failedTransactions": 62500,
+    "successRate": 95.0,
+    "totalFees": 6250000000,
+    "averageFee": 5000,
+    "totalComputeUnits": 250000000000,
+    "averageComputeUnits": 200000,
+    "averageAccountsCount": 8,
+    "uniqueInstructionTypes": 15,
+    "firstSeen": 1735689600,
+    "lastSeen": 1738368000
+  }
+}
+```
+
+### getProtocolComparison
+
+Compare multiple protocols side by side.
+
+**Parameters:**
+1. `options` (object, required):
+   - `protocols` (array, required): Array of protocol names to compare
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolComparison",
+  "params": [{
+    "protocols": ["drift_v2", "kamino_lending", "meteora_dlmm"],
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    }
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "protocolName": "drift_v2",
+      "totalTransactions": 1250000,
+      "successRate": 95.0,
+      "averageFee": 5000,
+      "averageComputeUnits": 200000,
+      "uniqueInstructionTypes": 15
+    },
+    {
+      "protocolName": "kamino_lending",
+      "totalTransactions": 980000,
+      "successRate": 97.5,
+      "averageFee": 4500,
+      "averageComputeUnits": 180000,
+      "uniqueInstructionTypes": 12
+    }
+  ]
+}
+```
+
+### getProtocolPerformance
+
+Get performance metrics for a protocol including percentiles.
+
+**Parameters:**
+1. `options` (object, required):
+   - `protocolName` (string, required): Protocol name
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolPerformance",
+  "params": [{
+    "protocolName": "drift_v2",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    }
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "protocolName": "drift_v2",
+    "successRate": 95.0,
+    "averageComputeUnits": 200000,
+    "averageFee": 5000,
+    "p50ComputeUnits": 195000,
+    "p95ComputeUnits": 250000,
+    "p99ComputeUnits": 300000,
+    "averageAccountsCount": 8,
+    "totalVolume": 1250000
+  }
+}
+```
+
+### getTopProtocols
+
+Get top protocols by various metrics.
+
+**Parameters:**
+1. `options` (object, optional):
+   - `limit` (number): Number of protocols to return (default: 10, max: 100)
+   - `sortBy` (string): Sort by `"transactions"`, `"fees"`, or `"successRate"` (default: `"transactions"`)
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getTopProtocols",
+  "params": [{
+    "limit": 10,
+    "sortBy": "transactions",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    }
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "protocolName": "drift_v2",
+      "transactionCount": 1250000,
+      "successRate": 95.0,
+      "totalFees": 6250000000
+    },
+    {
+      "protocolName": "kamino_lending",
+      "transactionCount": 980000,
+      "successRate": 97.5,
+      "totalFees": 4410000000
+    }
+  ]
+}
+```
+
+### getProtocolActivity
+
+Get time-series activity data for protocols.
+
+**Parameters:**
+1. `options` (object, required):
+   - `protocolName` (string, optional): Protocol name (omit for all protocols)
+   - `blockTime` (object, required): Time range filter
+     - `gte` (number, required): Greater than or equal (Unix timestamp)
+     - `lte` (number, required): Less than or equal (Unix timestamp)
+   - `interval` (string): `"hour"` or `"day"` (default: `"hour"`)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocolActivity",
+  "params": [{
+    "protocolName": "drift_v2",
+    "blockTime": {
+      "gte": 1735689600,
+      "lte": 1738368000
+    },
+    "interval": "hour"
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "timestamp": 1735689600,
+      "date": "2025-01-01",
+      "hour": 0,
+      "count": 1250,
+      "successCount": 1187,
+      "failedCount": 63,
+      "totalFees": 6250000,
+      "totalComputeUnits": 250000000
+    },
+    {
+      "timestamp": 1735693200,
+      "date": "2025-01-01",
+      "hour": 1,
+      "count": 1320,
+      "successCount": 1254,
+      "failedCount": 66,
+      "totalFees": 6600000,
+      "totalComputeUnits": 264000000
+    }
+  ]
+}
+```
+
+### getInstructionTypes
+
+Get instruction types with statistics for protocols.
+
+**Parameters:**
+1. `options` (object, optional):
+   - `protocolName` (string, optional): Protocol name (omit for all protocols)
+   - `limit` (number): Maximum number of results (default: 100, max: 1000)
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getInstructionTypes",
+  "params": [{
+    "protocolName": "kamino_lending",
+    "limit": 20
+  }]
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "instructionType": "Deposit",
+      "protocolName": "kamino_lending",
+      "count": 450000,
+      "successRate": 98.5,
+      "averageComputeUnits": 180000,
+      "averageFee": 4500
+    },
+    {
+      "instructionType": "Withdraw",
+      "protocolName": "kamino_lending",
+      "count": 320000,
+      "successRate": 97.2,
+      "averageComputeUnits": 175000,
+      "averageFee": 4400
+    }
+  ]
+}
+```
+
+### getFailedTransactions
+
+Get failed transactions with error details.
+
+**Parameters:**
+1. `options` (object, optional):
+   - `protocolName` (string, optional): Protocol name
+   - `programId` (string, optional): Program ID
+   - `limit` (number): Maximum number of results (default: 100, max: 1000)
+   - `blockTime` (object, optional): Time range filter
+     - `gte` (number): Greater than or equal (Unix timestamp)
+     - `lte` (number): Less than or equal (Unix timestamp)
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getFailedTransactions",
+  "params": [{
+    "protocolName": "drift_v2",
+    "limit": 100
+  }]
+}
+```
+
+**Example Response:**
 
 ```json
 {
@@ -172,19 +449,53 @@ Get transactions with filters (general method).
   "result": {
     "data": [
       {
-        "signature": "5VERv8NMxzbPDohNpJhHopN2C9R4G5GaPevYf5hLJ8Z7",
+        "signature": "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4LjF3ZdUi2gEB9M2K3j3gv6q",
         "slot": "123456789",
         "blockTime": 1735689600,
-        "programId": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
-        "protocolName": "jupiter_v6",
-        "instructionType": "swap",
-        "fee": 5000,
-        "computeUnits": 200000,
-        "accountsCount": 10,
-        "success": true
+        "programId": "dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH",
+        "protocolName": "drift_v2",
+        "errorMessage": "Insufficient funds",
+        "logMessages": "Program log: Error: Insufficient funds",
+        "rawData": "..."
       }
     ]
   }
+}
+```
+
+### getProtocols
+
+Get list of all available protocols.
+
+**Parameters:** None
+
+**Example Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "getProtocols",
+  "params": []
+}
+```
+
+**Example Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    "drift_v2",
+    "kamino_farms",
+    "kamino_lending",
+    "kamino_lending_vault",
+    "kamino_limo",
+    "meteora_dlmm",
+    "meteora_damm_v2",
+    "meteora_dynamic_bonding_curve"
+  ]
 }
 ```
 
@@ -199,7 +510,7 @@ All transaction objects returned by these methods contain:
 | `blockTime` | number | Unix timestamp |
 | `programId` | string | Program ID (Base58) |
 | `protocolName` | string | Protocol name |
-| `instructionType` | string | Instruction type |
+| `instructionType` | string | Instruction type (parsed from IDL) |
 | `fee` | number | Transaction fee (lamports) |
 | `computeUnits` | number | Compute units used |
 | `accountsCount` | number | Number of accounts involved |
@@ -243,5 +554,19 @@ Common error codes:
     href="/examples"
   >
     Real-world examples using these methods.
+  </Card>
+  <Card
+    title="FAQs"
+    icon="circle-question"
+    href="/faqs"
+  >
+    Frequently asked questions.
+  </Card>
+  <Card
+    title="Support"
+    icon="envelope"
+    href="/support"
+  >
+    Get help from our support team.
   </Card>
 </CardGroup>

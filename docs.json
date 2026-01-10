@@ -28,6 +28,12 @@
               "error-handling",
               "rate-limiting"
             ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "managed-backfill"
+            ]
           }
         ]
       },
@@ -46,6 +52,18 @@
             "pages": [
               "api-reference/rest-api",
               "api-reference/sql-query"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Help & Support",
+            "pages": [
+              "faqs",
+              "support"
             ]
           }
         ]
@@ -69,7 +87,7 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:support@solixdb.xyz"
+        "href": "/support"
       }
     ],
     "primary": {

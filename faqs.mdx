@@ -1,0 +1,184 @@
+---
+title: "FAQs"
+description: "Frequently asked questions about SolixDB API"
+---
+
+## General Questions
+
+<AccordionGroup>
+  <Accordion title="What is SolixDB?">
+    SolixDB is a production-ready REST/JSON-RPC API service that provides fast and flexible access to 929M+ Solana transaction instruction records from major DEX protocols. We parse and index Solana transactions with instruction-level detail, making it easy to query DeFi data.
+  </Accordion>
+
+  <Accordion title="What protocols are supported?">
+    We support major Solana DeFi protocols including:
+    - **DEX Aggregators**: Jupiter V4/V6, Raydium AMM V3, Raydium CP Swap
+    - **Lending**: Kamino Lending, Kamino Lending Vault
+    - **Farms**: Kamino Farms
+    - **Liquidity**: Kamino Limo, Meteora DLMM, Meteora DAMM V2, Meteora Dynamic Bonding Curve
+    - **Trading**: Drift V2, Pump.fun, Pump AMM
+    - **DEX**: Orca Whirlpool
+
+    More protocols are being added regularly.
+  </Accordion>
+
+  <Accordion title="How is SolixDB different from other Solana data providers?">
+    SolixDB focuses specifically on DeFi transaction analytics with:
+    - **Instruction-level parsing**: We parse instruction types from IDLs, not just raw transaction data
+    - **Analytics-first API**: Methods designed for analytics like protocol comparison, time-series data, and performance metrics
+    - **SQL query support**: Direct SQL queries for complex analytics
+    - **Smart caching**: >70% cache hit rate for historical queries
+    - **Failed transaction analysis**: Dedicated queries for error analysis
+  </Accordion>
+
+  <Accordion title="What data is available?">
+    For each transaction, we provide:
+    - Transaction signature, slot, and block time
+    - Program ID and protocol name
+    - Parsed instruction type
+    - Success status, fees, and compute units
+    - Account counts
+    - For failed transactions: error messages and logs
+  </Accordion>
+</AccordionGroup>
+
+## API Usage
+
+<AccordionGroup>
+  <Accordion title="How do I get an API key?">
+    Sign up at [dashboard.solixdb.xyz](https://dashboard.solixdb.xyz) to get your API key. We offer free, x402, and enterprise plans with different rate limits.
+  </Accordion>
+
+  <Accordion title="What are the rate limits?">
+    Rate limits vary by plan:
+    - **Free**: 100 requests/minute
+    - **x402**: 1,000 requests/minute
+    - **Enterprise**: Custom limits
+
+    See our [Rate Limiting](/rate-limiting) guide for details.
+  </Accordion>
+
+  <Accordion title="Can I use SQL queries?">
+    Yes! We support direct SQL queries via the `/v1/query` endpoint. Queries are automatically limited to 10,000 rows for safety. See our [SQL Query API](/api-reference/sql-query) documentation.
+  </Accordion>
+
+  <Accordion title="What's the difference between REST and JSON-RPC APIs?">
+    - **REST API**: Direct HTTP endpoints for specific operations
+    - **JSON-RPC API**: Method-based API following JSON-RPC 2.0 specification, similar to Helius and other RPC providers
+
+    Both APIs provide access to the same data. Choose based on your preference and integration needs.
+  </Accordion>
+
+  <Accordion title="How do I query transactions by instruction type?">
+    Use the `getTransactions` method with the `instructionTypes` filter, or use SQL queries:
+
+    ```json
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getTransactions",
+      "params": [{
+        "filters": {
+          "protocols": ["kamino_lending"],
+          "instructionTypes": ["Deposit", "Withdraw"]
+        }
+      }]
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Can I get time-series data?">
+    Yes! Use the `getProtocolActivity` method for hourly or daily time-series data:
+
+    ```json
+    {
+      "jsonrpc": "2.0",
+      "id": 1,
+      "method": "getProtocolActivity",
+      "params": [{
+        "protocolName": "drift_v2",
+        "blockTime": {
+          "gte": 1735689600,
+          "lte": 1738368000
+        },
+        "interval": "hour"
+      }]
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Data & Performance
+
+<AccordionGroup>
+  <Accordion title="How fresh is the data?">
+    Data is updated in near real-time. New transactions are indexed within minutes of being confirmed on-chain.
+  </Accordion>
+
+  <Accordion title="How far back does the data go?">
+    We currently have 929M+ transaction records indexed. The exact date range depends on when we started indexing each protocol. Contact us for specific date ranges.
+  </Accordion>
+
+  <Accordion title="What's the query performance like?">
+    With our smart caching and connection pooling:
+    - Historical queries: >70% cache hit rate
+    - Average query time: <100ms for cached queries
+    - Supports 1000+ concurrent requests
+    - Scales to 200 database connections
+  </Accordion>
+
+  <Accordion title="Can I export large datasets?">
+    For large exports, we recommend:
+    1. Using SQL queries with pagination
+    2. Contacting us for a [Managed Backfill](/managed-backfill) service
+    3. Using our enterprise plan for custom export options
+  </Accordion>
+</AccordionGroup>
+
+## Billing & Plans
+
+<AccordionGroup>
+  <Accordion title="What plans are available?">
+    We offer three plans:
+    - **Free**: 100 requests/minute, perfect for testing
+    - **x402**: 1,000 requests/minute, for production use
+    - **Enterprise**: Custom limits, dedicated support, and custom features
+
+    See [dashboard.solixdb.xyz](https://dashboard.solixdb.xyz) for current pricing.
+  </Accordion>
+
+  <Accordion title="How is usage billed?">
+    Usage is billed based on your plan tier. Free plans have rate limits but no charges. Paid plans are billed monthly based on your subscription tier.
+  </Accordion>
+
+  <Accordion title="Can I upgrade or downgrade my plan?">
+    Yes! You can change your plan at any time from the dashboard. Changes take effect immediately.
+  </Accordion>
+</AccordionGroup>
+
+## Support
+
+<AccordionGroup>
+  <Accordion title="How do I get help?">
+    - Check our [Support](/support) page
+    - Email us at [support@solixdb.xyz](mailto:support@solixdb.xyz)
+    - Open an issue on [GitHub](https://github.com/SolixDB)
+  </Accordion>
+
+  <Accordion title="Do you offer enterprise support?">
+    Yes! Enterprise customers get:
+    - Dedicated support channel
+    - Custom rate limits
+    - Priority feature requests
+    - Managed backfill services
+    - Custom data delivery options
+
+    Contact us at [support@solixdb.xyz](mailto:support@solixdb.xyz) for enterprise inquiries.
+  </Accordion>
+</AccordionGroup>
+
+## Still have questions?
+
+<Card title="Contact Support" icon="envelope" href="/support">
+  Can't find what you're looking for? Contact our support team.
+</Card>
