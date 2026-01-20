@@ -1076,7 +1076,7 @@ Query complexity is calculated based on:
 The API implements adaptive caching with real-time blockchain data invalidation:
 
 - **Hot queries** (>5 hits): 1 hour cache
-- **Recent data** (<24h): 5 min cache
+- **Recent data** (&lt;24h): 5 min cache
 - **Historical data**: 24 hour cache
 - **Aggregations**: 30 min cache
 - **Real-time invalidation**: Checks for new blockchain data every 60s
@@ -1086,9 +1086,9 @@ Cache hit rate is typically >70% for historical queries.
 ## Performance
 
 **Expected Response Times:**
-- Simple queries: <100ms p95
-- Complex queries: <1s p95
-- Aggregations: <2s p95
+- Simple queries: &lt;100ms p95
+- Complex queries: &lt;1s p95
+- Aggregations: &lt;2s p95
 
 **Concurrency:**
 - Handles 1000+ concurrent requests
